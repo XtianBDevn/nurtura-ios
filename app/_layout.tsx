@@ -1,13 +1,42 @@
 import React, { useEffect } from 'react';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { ConvexProvider } from 'convex/react';
+import { ConvexProvider, ConvexReactClient } from 'convex/react';
+import { ConvexAuthProvider } from '@convex-dev/auth/react';
 import * as SplashScreen from 'expo-splash-screen';
-import { convex } from '@/lib/convex';
+import * as SecureStore from 'expo-secure-store';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { Colors } from '@/lib/theme';
 
 SplashScreen.preventAutoHideAsync();
+
+const CONVEX_URL = process.env.EXPO_PUBLIC_CONVEX_URL || 'https://capable-stork-178.convex.cloud';
+const convex = new ConvexReactClient(CONVEX_URL);
+
+// Secure token storage for React Native (replaces localStorage)
+const secureStorage = {
+  getItem: async (key: string) => {
+    try {
+      return await SecureStore.getItemAsync(key);
+    } catch {
+      return null;
+    }
+  },
+  setItem: async (key: string, value: string) => {
+    try {
+      await SecureStore.setItemAsync(key, value);
+    } catch {
+      // silently fail
+    }
+  },
+  removeItem: async (key: string) => {
+    try {
+      await SecureStore.deleteItemAsync(key);
+    } catch {
+      // silently fail
+    }
+  },
+};
 
 export default function RootLayout() {
   const scheme = useColorScheme();
@@ -18,7 +47,7 @@ export default function RootLayout() {
   }, []);
 
   return (
-    <ConvexProvider client={convex}>
+    <ConvexAuthProvider client={convex} storage={secureStorage}>
       <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
       <Stack
         screenOptions={{
@@ -32,6 +61,6 @@ export default function RootLayout() {
         <Stack.Screen name="onboarding" options={{ gestureEnabled: false }} />
         <Stack.Screen name="(tabs)" options={{ animation: 'fade' }} />
       </Stack>
-    </ConvexProvider>
+    </ConvexAuthProvider>
   );
 }
