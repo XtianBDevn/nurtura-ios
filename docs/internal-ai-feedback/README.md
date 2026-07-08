@@ -1,29 +1,44 @@
-# Nurtura Second-Brain Knowledgebase
+# Nurtura Internal AI Feedback
 
-This is the launch, testing, submission, and marketing knowledgebase for
-Nurtura, a native iOS and watchOS care coordination app.
+Nurtura is a healthcare native mobile application for caregiving.
+
+This folder is not the product, not an operating system, and not a second
+brain. It is an internal feedback area for AI-assisted engineering work:
+dependency lessons, agent mistakes, release guardrails, and reusable runbooks.
 
 ## Start Here
-- [Product Brief](01-product/nurtura-product-brief.md)
-- [iOS And Watch Implementation Guide](02-implementation/nurtura-ios-watch-implementation-guide.md)
-- [Testing And QA Guide](03-testing/nurtura-testing-qa-guide.md)
-- [App Store Submission Guide](04-app-store-submission/nurtura-app-store-submission-guide.md)
-- [iOS Healthcare Marketing Guide](05-marketing/nurtura-ios-healthcare-marketing-guide.md)
-- [Nurtura Launch Campaign](05-marketing/nurtura-launch-campaign.md)
-- [Agent Workflow Knowledgebase Guide](06-agentic-os/nurtura-agentic-os-guide.md)
-- [Current Baseline](00-index/current-baseline.md)
-- [Source Notes](00-index/source-notes.md)
 
-## Copied Project Materials
-Existing PDFs and code snapshots are copied into `copied-project-docs/` so this
-folder can stand alone as a second-brain reference pack.
+- [Internal AI Feedback Guide](internal-ai-feedback-guide.md)
+- [Agent Ingestion Index](agent-ingestion-index.md)
+- [Self-Improvement Log](self-improvement-log.md)
+- [Dependency Audit Runbook](dependency-audit-runbook.md)
 
-## Images And Diagrams
-- [Native iOS/watchOS architecture](assets/images/nurtura-ios-watch-architecture.svg)
-- [App Store submission flow](assets/images/nurtura-app-store-submission-flow.svg)
-- [TestFlight and QA loop](assets/images/nurtura-testflight-qa-loop.svg)
-- [Healthcare marketing funnel](assets/images/nurtura-healthcare-marketing-funnel.svg)
-- [Agent workflow knowledge loop](assets/images/nurtura-agentic-os-loop.svg)
-- [App Store Connect screenshot mockup](assets/images/app-store-connect-nurtura-mockup.svg)
-- [TestFlight screenshot mockup](assets/images/testflight-nurtura-mockup.svg)
-- [Watch app screenshot mockup](assets/images/nurtura-watch-screenshot-mockup.svg)
+## Product Docs
+
+The actual Nurtura healthcare mobile app docs live in:
+
+- `/Users/christianbryant/nurtura-ios/README.md`
+- `/Users/christianbryant/nurtura-ios/docs/ARCHITECTURE.md`
+- `/Users/christianbryant/nurtura-ios/docs/CODE_REVIEW.md`
+- `/Users/christianbryant/nurtura-ios/docs/TESTING.md`
+- `/Users/christianbryant/nurtura-ios/docs/TESTFLIGHT_WALKTHROUGH.md`
+- `/Users/christianbryant/nurtura-ios/docs/PUBLISHING_GUIDE.md`
+- `/Users/christianbryant/nurtura-ios/docs/MARKETING_90_DAY_GUIDE.md`
+
+## Naming Rule
+
+Use this language:
+
+- "Nurtura healthcare native mobile app"
+- "Nurtura iOS app"
+- "internal AI feedback"
+- "internal agent runbook"
+- "engineering memory"
+
+Avoid this language for the product:
+
+- "Nurtura Agentic OS"
+- "Nurtura operating system"
+- "Nurtura second brain"
+
+Those phrases confuse the app with the internal workflow used to build it.

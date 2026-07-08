@@ -1,7 +1,90 @@
-# Agent Self-Improvement Log
+# Internal AI Self-Improvement Log
 
-This log captures operational lessons for future Nurtura agents. Use it as
-memory input before dependency, audit, testing, or release work.
+This log captures operational lessons for future AI-assisted work on Nurtura.
+Nurtura is a healthcare native mobile application, not an operating system and
+not a second brain.
+
+## 2026-07-08 - Product Naming Boundary: Nurtura Is The Healthcare Mobile App
+
+Decision:
+
+All docs and future agent outputs must describe Nurtura as a healthcare native
+mobile application or iOS app. Internal AI workflow material must be labeled as
+internal feedback, internal runbooks, engineering memory, or AI-assisted
+process documentation.
+
+Why:
+
+Previous docs used "Agentic OS" and "second brain" language too close to the
+product name. That incorrectly implied Nurtura itself was an operating system
+or knowledge-management product. The user clarified the product boundary:
+Nurtura is a healthcare native mobile app.
+
+Correct naming:
+
+- Nurtura healthcare native mobile app
+- Nurtura iOS app
+- Nurtura caregiving app
+- internal AI feedback
+- internal engineering memory
+- dependency audit runbook
+
+Avoid:
+
+- Nurtura Agentic OS
+- Nurtura operating system
+- Nurtura second brain
+
+Agent rule:
+
+Before writing product docs, release notes, marketing copy, or internal memory,
+state the product category plainly: "Nurtura is a healthcare native mobile
+application for caregiving." If the document is for AI process improvement,
+label it as internal AI feedback and keep it separate from product messaging.
+
+## 2026-07-08 - Overnight Nurtura Build Log
+
+Summary:
+
+The overnight work focused on turning Nurtura into a more testable and
+launch-ready healthcare mobile app while preserving a clean Expo SDK 52 stack.
+
+Completed:
+
+- Fixed broken auth/onboarding routing so returning users land in the correct
+  flow.
+- Rebuilt onboarding around a comprehensive clinical intake:
+  conditions, allergies, medications, mobility, fall risk, cognition,
+  ADL/IADL independence, and quality-of-life.
+- Added a deterministic care-plan engine in `lib/carePlan.ts`.
+- Added Convex `healthProfiles` support and care-recipient authorization
+  helpers.
+- Wired Schedule, Messages, Medications, and Time Tracking fixes.
+- Added `startedAt` and `endedAt` time tracking support for overnight shifts.
+- Added NativeWind hybrid styling support.
+- Added Jest tests for the care-plan engine and care-plan card.
+- Added testing, architecture, flowchart, screenshots, TestFlight, publishing,
+  and marketing docs.
+- Captured real iOS Simulator screenshots.
+- Fixed the `@xmldom/xmldom` advisory without accepting a breaking partial
+  Expo 57 upgrade.
+- Added a dependency audit runbook explaining why `npm audit fix --force`
+  must not be used casually in this app.
+
+Verification run:
+
+```text
+npm run typecheck: PASS
+npm run lint: PASS
+npm test: PASS
+npx expo export --platform ios --output-dir /tmp/nurtura-ios-export --no-minify: PASS
+```
+
+Important correction:
+
+The internal memory/runbook system must not be presented as the product.
+Nurtura remains the healthcare native mobile application. AI feedback docs are
+supporting engineering process only.
 
 ## 2026-07-08 - Do Not Use `npm audit fix --force` On Expo SDK 52
 

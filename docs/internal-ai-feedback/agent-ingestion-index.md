@@ -1,12 +1,14 @@
-# Agent Ingestion Index
+# Internal AI Feedback Ingestion Index
 
-Read these files first when bootstrapping an agent for Nurtura iOS work.
+Read these files first when bootstrapping AI-assisted work for Nurtura.
+Nurtura itself is a healthcare native mobile application, not an OS or second
+brain.
 
 ## Always Read
 
-1. `nurtura-agentic-os-guide.md`
-   - Internal agent workflow, agent roles, launch memory checklist.
-2. `agent-self-improvement-log.md`
+1. `internal-ai-feedback-guide.md`
+   - Product boundary, internal roles, launch memory checklist.
+2. `self-improvement-log.md`
    - Known agent failure modes and corrected rules.
 
 ## Read For Dependency Or Audit Work
@@ -23,17 +25,16 @@ Read these files first when bootstrapping an agent for Nurtura iOS work.
 1. `/Users/christianbryant/nurtura-ios/docs/PUBLISHING_GUIDE.md`
 2. `/Users/christianbryant/nurtura-ios/docs/APP_STORE_GUIDE.md`
 3. `/Users/christianbryant/nurtura-ios/docs/TESTFLIGHT_WALKTHROUGH.md`
-4. `../04-app-store-submission/nurtura-app-store-submission-guide.md`
 
 ## Read For Health, Privacy, Or Marketing Claims
 
 1. `/Users/christianbryant/nurtura-ios/docs/CODE_REVIEW.md`
-2. `../00-index/source-notes.md`
-3. `../05-marketing/nurtura-ios-healthcare-marketing-guide.md`
+2. `/Users/christianbryant/nurtura-ios/docs/MARKETING_90_DAY_GUIDE.md`
 
 ## Agent Startup Checklist
 
 - [ ] Identify current task type: code, docs, audit, release, marketing, QA.
+- [ ] Preserve product naming: Nurtura is a healthcare native mobile app.
 - [ ] Load the matching files above.
 - [ ] Check whether the task touches Convex; if yes, read `/Users/christianbryant/nurtura-ios/convex/_generated/ai/guidelines.md`.
 - [ ] If dependency work, do not run `npm audit fix --force`.
