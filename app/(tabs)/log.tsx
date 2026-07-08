@@ -15,10 +15,9 @@ import * as Haptics from 'expo-haptics';
 import { NText } from '@/components/NText';
 import { NButton } from '@/components/NButton';
 import { NInput } from '@/components/NInput';
-import { NCard } from '@/components/NCard';
 import { SelectionCard } from '@/components/SelectionCard';
 import { useColors } from '@/hooks/useThemeColor';
-import { Spacing, Radius } from '@/lib/theme';
+import { Spacing } from '@/lib/theme';
 import { api } from '../../convex/_generated/api';
 
 type LogType = 'task' | 'vital' | 'meal' | 'activity' | 'mood' | 'note';

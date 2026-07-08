@@ -7,7 +7,6 @@ import {
   View,
   ScrollView,
   StyleSheet,
-  TouchableOpacity,
   Modal,
   Alert,
 } from 'react-native';
@@ -21,7 +20,7 @@ import { NInput } from '@/components/NInput';
 import { SelectionCard } from '@/components/SelectionCard';
 import { EmojiPicker } from '@/components/EmojiPicker';
 import { useColors } from '@/hooks/useThemeColor';
-import { Spacing, Radius } from '@/lib/theme';
+import { Spacing } from '@/lib/theme';
 import { api } from '../../convex/_generated/api';
 
 type CareType = 'senior' | 'disability' | 'childcare' | 'general';

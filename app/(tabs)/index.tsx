@@ -11,8 +11,10 @@ import { NText } from '@/components/NText';
 import { NButton } from '@/components/NButton';
 import { NCard } from '@/components/NCard';
 import { StatCard } from '@/components/StatCard';
+import { CarePlanCard } from '@/components/CarePlanCard';
 import { useColors } from '@/hooks/useThemeColor';
 import { Spacing, Radius } from '@/lib/theme';
+import { generateCarePlan } from '@/lib/carePlan';
 import { api } from '../../convex/_generated/api';
 
 export default function DashboardScreen() {
@@ -21,6 +23,12 @@ export default function DashboardScreen() {
   const stats = useQuery(api.dashboard.stats);
   const recentLogs = useQuery(api.careLogs.listRecent, { limit: 5 });
   const recipients = useQuery(api.careRecipients.list);
+  const primaryRecipient = recipients?.[0];
+  const health = useQuery(
+    api.healthProfiles.get,
+    primaryRecipient ? { careRecipientId: primaryRecipient._id } : 'skip',
+  );
+  const carePlan = health ? generateCarePlan(health as any) : null;
 
   const greeting = () => {
     const hour = new Date().getHours();
@@ -93,6 +101,24 @@ export default function DashboardScreen() {
           />
         </View>
       </View>
+
+      {/* Personalized Care Plan */}
+      {carePlan && primaryRecipient && (
+        <View style={styles.sectionCard}>
+          <View style={styles.planHeader}>
+            <NText variant="caption1" muted>
+              {primaryRecipient.avatarEmoji} {primaryRecipient.name}'s plan
+            </NText>
+            <NButton
+              title="Manage"
+              variant="ghost"
+              size="sm"
+              onPress={() => router.push('/(tabs)/recipients')}
+            />
+          </View>
+          <CarePlanCard plan={carePlan} compact />
+        </View>
+      )}
 
       {/* Care Recipients */}
       <NCard style={styles.sectionCard} padded={false}>
@@ -257,6 +283,12 @@ const styles = StyleSheet.create({
   },
   statHalf: { width: '47.5%' },
   sectionCard: { marginBottom: Spacing.xl },
+  planHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: Spacing.sm,
+  },
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',

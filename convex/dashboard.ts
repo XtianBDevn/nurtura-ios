@@ -28,14 +28,14 @@ export const stats = query({
     let todayLogs = 0;
     let activeMeds = 0;
     let todaySchedule = 0;
-    const upcomingSchedule: Array<{
+    const upcomingSchedule: {
       title: string;
       startTime?: string;
       recipientName: string;
       recipientEmoji: string;
       type: string;
       completed: boolean;
-    }> = [];
+    }[] = [];
 
     for (const m of memberships) {
       const recipient = await ctx.db.get(m.careRecipientId);

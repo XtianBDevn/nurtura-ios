@@ -2,7 +2,7 @@
  * More Tab — Settings hub
  * Medications, Messages, Time Tracking, Integrations, Subscription, Security, Profile
  */
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   ScrollView,
@@ -10,7 +10,6 @@ import {
   TouchableOpacity,
   Modal,
   Alert,
-  Switch,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useQuery, useMutation } from 'convex/react';
@@ -41,17 +40,62 @@ export default function MoreScreen() {
   const colors = useColors();
   const { signOut } = useAuthActions();
   const profile = useQuery(api.profiles.get);
-  const medications = useQuery(api.medications.list);
-  const messages = useQuery(api.messages.list);
+  const recipients = useQuery(api.careRecipients.list);
+  const medications = useQuery(api.medications.listAll);
+  const messages = useQuery(api.messages.listAll, {});
   const subscription = useQuery(api.subscriptions.get);
+  const activeShift = useQuery(api.timeEntries.getActive);
 
   const [activeModal, setActiveModal] = useState<ModalType>(null);
   const [medName, setMedName] = useState('');
   const [medDosage, setMedDosage] = useState('');
   const [medFrequency, setMedFrequency] = useState('');
+  const [medRecipientId, setMedRecipientId] = useState<string | null>(null);
+  const [timeRecipientId, setTimeRecipientId] = useState<string | null>(null);
+  const [elapsed, setElapsed] = useState('0:00:00');
   const [loading, setLoading] = useState(false);
 
   const createMed = useMutation(api.medications.create);
+  const clockIn = useMutation(api.timeEntries.clockIn);
+  const clockOut = useMutation(api.timeEntries.clockOut);
+
+  // Live shift timer — ticks while a shift is active
+  useEffect(() => {
+    if (!activeShift) {
+      setElapsed('0:00:00');
+      return;
+    }
+    const startMs = activeShift.startedAt ?? activeShift._creationTime;
+    const tick = () => {
+      const diff = Math.max(0, Date.now() - startMs);
+      const h = Math.floor(diff / 3_600_000);
+      const m = Math.floor((diff % 3_600_000) / 60_000);
+      const s = Math.floor((diff % 60_000) / 1000);
+      setElapsed(`${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`);
+    };
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, [activeShift]);
+
+  const handleToggleShift = async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    try {
+      if (activeShift) {
+        await clockOut({ id: activeShift._id });
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      } else {
+        const recipientId = timeRecipientId ?? recipients?.[0]?._id;
+        if (!recipientId) {
+          Alert.alert('No Recipient', 'Add a care recipient before tracking time.');
+          return;
+        }
+        await clockIn({ careRecipientId: recipientId as any });
+      }
+    } catch (err: any) {
+      Alert.alert('Error', err.message);
+    }
+  };
 
   const menuItems: MenuItem[] = [
     {
@@ -67,7 +111,7 @@ export default function MoreScreen() {
       subtitle: 'Team communication',
       color: colors.chart3,
       modal: 'messages',
-      badge: messages?.some((m) => !m.read) ? 'NEW' : undefined,
+      badge: messages?.length ? String(messages.length) : undefined,
     },
     {
       icon: 'time',
@@ -108,12 +152,18 @@ export default function MoreScreen() {
 
   const handleAddMed = async () => {
     if (!medName.trim()) return;
+    const recipientId = medRecipientId ?? recipients?.[0]?._id;
+    if (!recipientId) {
+      Alert.alert('No Recipient', 'Add a care recipient before adding medications.');
+      return;
+    }
     setLoading(true);
     try {
       await createMed({
+        careRecipientId: recipientId as any,
         name: medName,
-        dosage: medDosage || undefined,
-        frequency: medFrequency || 'daily',
+        dosage: medDosage.trim() || 'As directed',
+        frequency: medFrequency.trim() || 'Daily',
       });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       setMedName('');
@@ -136,24 +186,48 @@ export default function MoreScreen() {
               Track medications for your care recipients
             </NText>
 
-            {medications?.map((med) => (
-              <NCard key={med._id} style={{ marginBottom: Spacing.md }}>
-                <View style={styles.medRow}>
-                  <Ionicons name="medical" size={20} color={colors.chart2} />
-                  <View style={{ flex: 1, marginLeft: Spacing.md }}>
-                    <NText variant="headline">{med.name}</NText>
-                    {med.dosage && <NText variant="caption1" muted>{med.dosage}</NText>}
-                    {med.frequency && <NText variant="caption1" muted>{med.frequency}</NText>}
+            {!medications?.length ? (
+              <View style={styles.emptyState}>
+                <Ionicons name="medkit-outline" size={40} color={colors.textTertiary} />
+                <NText variant="subheadline" muted style={{ marginTop: Spacing.md }}>
+                  No medications yet
+                </NText>
+              </View>
+            ) : (
+              medications.map((med) => (
+                <NCard key={med._id} style={{ marginBottom: Spacing.md }}>
+                  <View style={styles.medRow}>
+                    <Ionicons name="medical" size={20} color={colors.chart2} />
+                    <View style={{ flex: 1, marginLeft: Spacing.md }}>
+                      <NText variant="headline">{med.name}</NText>
+                      <NText variant="caption1" muted>
+                        {med.recipientEmoji} {med.recipientName} · {med.dosage} · {med.frequency}
+                      </NText>
+                    </View>
+                    <View style={[styles.statusDot, { backgroundColor: med.active ? colors.success : colors.textTertiary }]} />
                   </View>
-                  <View style={[styles.statusDot, { backgroundColor: med.active ? colors.success : colors.textTertiary }]} />
-                </View>
-              </NCard>
-            ))}
+                </NCard>
+              ))
+            )}
 
             <View style={[styles.addSection, { borderTopColor: colors.border }]}>
               <NText variant="headline" bold style={{ marginBottom: Spacing.md }}>
                 Add Medication
               </NText>
+              {(recipients?.length ?? 0) > 1 && (
+                <>
+                  <NText variant="footnote" bold muted style={{ marginBottom: Spacing.sm }}>FOR</NText>
+                  {recipients?.map((r) => (
+                    <SelectionCard
+                      key={r._id}
+                      title={r.name}
+                      icon={r.avatarEmoji || '👤'}
+                      selected={(medRecipientId ?? recipients?.[0]?._id) === r._id}
+                      onPress={() => setMedRecipientId(r._id)}
+                    />
+                  ))}
+                </>
+              )}
               <NInput label="NAME" placeholder="Medication name" value={medName} onChangeText={setMedName} />
               <NInput label="DOSAGE" placeholder="e.g. 50mg" value={medDosage} onChangeText={setMedDosage} />
               <NInput label="FREQUENCY" placeholder="e.g. twice daily" value={medFrequency} onChangeText={setMedFrequency} />
@@ -182,10 +256,13 @@ export default function MoreScreen() {
                 <NCard key={msg._id} style={{ marginBottom: Spacing.md }}>
                   <View style={styles.msgRow}>
                     <View style={[styles.msgAvatar, { backgroundColor: colors.primaryLight }]}>
-                      <NText variant="headline">{msg.senderName?.[0] || '?'}</NText>
+                      <NText variant="headline">{msg.userName?.[0] || '?'}</NText>
                     </View>
                     <View style={{ flex: 1 }}>
-                      <NText variant="headline">{msg.senderName || 'Unknown'}</NText>
+                      <NText variant="headline">{msg.userName || 'Unknown'}</NText>
+                      <NText variant="caption2" muted>
+                        {msg.recipientEmoji} {msg.recipientName}
+                      </NText>
                       <NText variant="subheadline" muted numberOfLines={2}>{msg.content}</NText>
                       <NText variant="caption2" muted style={{ marginTop: 2 }}>
                         {new Date(msg.timestamp).toLocaleString([], {
@@ -196,7 +273,6 @@ export default function MoreScreen() {
                         })}
                       </NText>
                     </View>
-                    {!msg.read && <View style={[styles.unreadDot, { backgroundColor: colors.primary }]} />}
                   </View>
                 </NCard>
               ))
@@ -212,16 +288,39 @@ export default function MoreScreen() {
               Professional caregiver time logs
             </NText>
 
+            {!activeShift && (recipients?.length ?? 0) > 1 && (
+              <>
+                <NText variant="footnote" bold muted style={{ marginBottom: Spacing.sm }}>CARE RECIPIENT</NText>
+                {recipients?.map((r) => (
+                  <SelectionCard
+                    key={r._id}
+                    title={r.name}
+                    icon={r.avatarEmoji || '👤'}
+                    selected={(timeRecipientId ?? recipients?.[0]?._id) === r._id}
+                    onPress={() => setTimeRecipientId(r._id)}
+                  />
+                ))}
+              </>
+            )}
+
             <NCard>
               <View style={styles.timerSection}>
-                <NText variant="largeTitle" bold center style={{ letterSpacing: -2 }}>
-                  0:00:00
+                <NText variant="largeTitle" bold center style={{ letterSpacing: -2, color: activeShift ? colors.primary : colors.text }}>
+                  {elapsed}
                 </NText>
                 <NText variant="footnote" muted center style={{ marginTop: Spacing.sm }}>
-                  Select a care recipient and start the timer
+                  {activeShift
+                    ? `On shift with ${activeShift.recipientName}`
+                    : 'Start the timer to log a shift'}
                 </NText>
                 <View style={styles.timerBtns}>
-                  <NButton title="Start Shift" onPress={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)} fullWidth size="lg" />
+                  <NButton
+                    title={activeShift ? 'End Shift' : 'Start Shift'}
+                    variant={activeShift ? 'danger' : 'primary'}
+                    onPress={handleToggleShift}
+                    fullWidth
+                    size="lg"
+                  />
                 </View>
               </View>
             </NCard>
@@ -301,10 +400,11 @@ export default function MoreScreen() {
             </NText>
 
             {[
-              { icon: 'lock-closed', title: 'End-to-End Encryption', desc: 'All data encrypted in transit and at rest', enabled: true },
-              { icon: 'finger-print', title: 'Biometric Lock', desc: 'Require Face ID / Touch ID', enabled: false },
-              { icon: 'shield-checkmark', title: 'HIPAA Compliance', desc: 'Healthcare-grade data protection', enabled: true },
-              { icon: 'document-text', title: 'Export Data', desc: 'Download a copy of your data', enabled: false },
+              { icon: 'lock-closed', title: 'Encryption in Transit', desc: 'All data is encrypted over TLS to the backend', status: 'on' },
+              { icon: 'key', title: 'Secure Token Storage', desc: 'Auth tokens stored in the iOS Keychain', status: 'on' },
+              { icon: 'shield-checkmark', title: 'Team-Based Access', desc: 'Care data is scoped to authorized team members', status: 'on' },
+              { icon: 'finger-print', title: 'Biometric App Lock', desc: 'Require Face ID / Touch ID to open', status: 'soon' },
+              { icon: 'document-text', title: 'Export My Data', desc: 'Download a copy of your data', status: 'soon' },
             ].map((item) => (
               <NCard key={item.title} style={{ marginBottom: Spacing.md }}>
                 <View style={styles.securityRow}>
@@ -313,12 +413,13 @@ export default function MoreScreen() {
                     <NText variant="headline">{item.title}</NText>
                     <NText variant="caption1" muted>{item.desc}</NText>
                   </View>
-                  <Switch
-                    value={item.enabled}
-                    onValueChange={() => {}}
-                    trackColor={{ false: colors.surfaceMuted, true: colors.primaryLight }}
-                    thumbColor={item.enabled ? colors.primary : colors.textTertiary}
-                  />
+                  {item.status === 'on' ? (
+                    <Ionicons name="checkmark-circle" size={22} color={colors.success} />
+                  ) : (
+                    <View style={[styles.currentBadge, { backgroundColor: colors.surfaceMuted }]}>
+                      <NText variant="caption2" muted bold>SOON</NText>
+                    </View>
+                  )}
                 </View>
               </NCard>
             ))}

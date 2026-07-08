@@ -3,7 +3,6 @@ import { View, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { NText } from './NText';
 import { NCard } from './NCard';
-import { useColors } from '@/hooks/useThemeColor';
 import { Spacing, Radius } from '@/lib/theme';
 
 interface StatCardProps {

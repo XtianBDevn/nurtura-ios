@@ -1,6 +1,7 @@
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
+import { assertOnTeam, getTeamMembership } from "./lib/authz";
 
 export const list = query({
   args: {
@@ -10,6 +11,8 @@ export const list = query({
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) return [];
+    if (!(await getTeamMembership(ctx, userId, args.careRecipientId)))
+      return [];
 
     const logs = await ctx.db
       .query("careLogs")
@@ -97,6 +100,7 @@ export const create = mutation({
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Not authenticated");
+    await assertOnTeam(ctx, userId, args.careRecipientId);
 
     return await ctx.db.insert("careLogs", {
       ...args,
@@ -106,9 +110,21 @@ export const create = mutation({
   },
 });
 
+const EMPTY_STATS = {
+  total: 0,
+  today: 0,
+  thisWeek: 0,
+  byType: { task: 0, vital: 0, meal: 0, note: 0, activity: 0, mood: 0 },
+};
+
 export const stats = query({
   args: { careRecipientId: v.id("careRecipients") },
   handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return EMPTY_STATS;
+    if (!(await getTeamMembership(ctx, userId, args.careRecipientId)))
+      return EMPTY_STATS;
+
     const logs = await ctx.db
       .query("careLogs")
       .withIndex("by_care_recipient", (q) =>

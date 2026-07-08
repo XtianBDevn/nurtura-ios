@@ -8,31 +8,61 @@ import {
   ScrollView,
   StyleSheet,
   Dimensions,
-  Image,
+  ActivityIndicator,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
+import { router, Redirect } from 'expo-router';
+import { useConvexAuth, useQuery } from 'convex/react';
 import { NText } from '@/components/NText';
 import { NButton } from '@/components/NButton';
 import { NCard } from '@/components/NCard';
 import { useColors } from '@/hooks/useThemeColor';
 import { Spacing, Radius } from '@/lib/theme';
+import { api } from '../convex/_generated/api';
 
 const { width } = Dimensions.get('window');
 
 const FEATURES = [
   { icon: 'clipboard-outline' as const, title: 'Care Logging', desc: 'Track daily care activities with ease' },
-  { icon: 'medkit-outline' as const, title: 'Medications', desc: 'Never miss a dose with smart reminders' },
+  { icon: 'medkit-outline' as const, title: 'Medications', desc: 'Keep doses, instructions, and routines organized' },
   { icon: 'calendar-outline' as const, title: 'Scheduling', desc: 'Coordinate shifts and appointments' },
   { icon: 'people-outline' as const, title: 'Team Coordination', desc: 'Keep your care team in sync' },
   { icon: 'time-outline' as const, title: 'Time Tracking', desc: 'Log hours for professional caregivers' },
   { icon: 'chatbubbles-outline' as const, title: 'Messaging', desc: 'Real-time care team communication' },
 ];
 
+/**
+ * Root gate. Decides where an opening user lands:
+ *  - auth state still resolving → splash
+ *  - signed in + onboarding done → main app
+ *  - signed in + onboarding incomplete (or no profile) → onboarding
+ *  - signed out → marketing landing below
+ */
 export default function LandingScreen() {
   const colors = useColors();
+  const { isLoading, isAuthenticated } = useConvexAuth();
+  const profile = useQuery(api.profiles.get, isAuthenticated ? {} : 'skip');
 
+  if (isLoading || (isAuthenticated && profile === undefined)) {
+    return (
+      <View style={[styles.splash, { backgroundColor: colors.background }]}>
+        <View style={[styles.splashBadge, { backgroundColor: colors.primary }]}>
+          <Ionicons name="leaf" size={28} color="#FFF" />
+        </View>
+        <ActivityIndicator color={colors.primary} style={{ marginTop: Spacing.xl }} />
+      </View>
+    );
+  }
+
+  if (isAuthenticated) {
+    return <Redirect href={profile?.onboardingComplete ? '/(tabs)' : '/onboarding'} />;
+  }
+
+  return <Marketing colors={colors} />;
+}
+
+function Marketing({ colors }: { colors: ReturnType<typeof useColors> }) {
   return (
     <ScrollView
       style={[styles.container, { backgroundColor: colors.background }]}
@@ -80,7 +110,7 @@ export default function LandingScreen() {
 
         {/* Trust badges */}
         <View style={styles.badges}>
-          {['iPhone & iPad', 'Apple Watch Ready', 'HIPAA Ready'].map((badge) => (
+          {['iPhone & iPad', 'Secure sign-in', 'Care-team ready'].map((badge) => (
             <View key={badge} style={[styles.badge, { backgroundColor: colors.surfaceMuted }]}>
               <Ionicons name="checkmark-circle" size={14} color={colors.primary} />
               <NText variant="caption2" style={{ marginLeft: 4 }}>{badge}</NText>
@@ -186,6 +216,14 @@ export default function LandingScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   content: { paddingBottom: 40 },
+  splash: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  splashBadge: {
+    width: 56,
+    height: 56,
+    borderRadius: Radius.xl,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   hero: {
     paddingTop: 80,
     paddingHorizontal: Spacing.xl,

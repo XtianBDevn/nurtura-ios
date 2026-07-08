@@ -28,11 +28,12 @@ const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov
 
 export default function ScheduleScreen() {
   const colors = useColors();
-  const scheduleItems = useQuery(api.schedule.list);
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const selectedDateStr = selectedDate.toISOString().split('T')[0];
+  const scheduleItems = useQuery(api.schedule.listForUser, { date: selectedDateStr });
   const recipients = useQuery(api.careRecipients.list);
   const createItem = useMutation(api.schedule.create);
 
-  const [selectedDate, setSelectedDate] = useState(new Date());
   const [showAdd, setShowAdd] = useState(false);
   const [title, setTitle] = useState('');
   const [type, setType] = useState<'appointment' | 'shift' | 'medication' | 'task'>('appointment');
@@ -128,8 +129,8 @@ export default function ScheduleScreen() {
                 key={i}
                 style={[
                   styles.dayCell,
-                  day && isSelected(day) && { backgroundColor: colors.primary },
-                  day && isToday(day) && !isSelected(day) && {
+                  !!day && isSelected(day) && { backgroundColor: colors.primary },
+                  !!day && isToday(day) && !isSelected(day) && {
                     backgroundColor: colors.primaryLight,
                   },
                 ]}

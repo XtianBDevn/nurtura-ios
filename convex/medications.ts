@@ -1,12 +1,15 @@
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
+import { assertOnTeam, getTeamMembership } from "./lib/authz";
 
 export const list = query({
   args: { careRecipientId: v.id("careRecipients") },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) return [];
+    if (!(await getTeamMembership(ctx, userId, args.careRecipientId)))
+      return [];
 
     return await ctx.db
       .query("medications")
@@ -29,6 +32,7 @@ export const create = mutation({
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Not authenticated");
+    await assertOnTeam(ctx, userId, args.careRecipientId);
 
     return await ctx.db.insert("medications", {
       ...args,
@@ -45,6 +49,7 @@ export const toggleActive = mutation({
     if (!userId) throw new Error("Not authenticated");
     const med = await ctx.db.get(args.id);
     if (!med) throw new Error("Not found");
+    await assertOnTeam(ctx, userId, med.careRecipientId);
     await ctx.db.patch(args.id, { active: !med.active });
   },
 });
@@ -64,6 +69,12 @@ export const logMedication = mutation({
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Not authenticated");
+    await assertOnTeam(ctx, userId, args.careRecipientId);
+
+    // Ensure the medication actually belongs to this care recipient
+    const med = await ctx.db.get(args.medicationId);
+    if (!med || med.careRecipientId !== args.careRecipientId)
+      throw new Error("Medication not found for this care recipient");
 
     return await ctx.db.insert("medicationLogs", {
       ...args,
@@ -79,6 +90,11 @@ export const getLogs = query({
     date: v.string(),
   },
   handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return [];
+    if (!(await getTeamMembership(ctx, userId, args.careRecipientId)))
+      return [];
+
     return await ctx.db
       .query("medicationLogs")
       .withIndex("by_care_recipient_date", (q) =>

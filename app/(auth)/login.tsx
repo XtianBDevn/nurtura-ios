@@ -32,7 +32,9 @@ export default function LoginScreen() {
     setLoading(true);
     try {
       await signIn('password', { email, password, flow: 'signIn' });
-      router.replace('/(tabs)');
+      // Route through the root gate, which sends the user to onboarding
+      // or the main app depending on their profile state.
+      router.replace('/');
     } catch (err: any) {
       Alert.alert('Login Failed', err.message || 'Invalid email or password.');
     } finally {

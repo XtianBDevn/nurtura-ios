@@ -4,7 +4,7 @@ import {
   StyleSheet,
   ActivityIndicator,
   ViewStyle,
-  TextStyle,
+  StyleProp,
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { NText } from './NText';
@@ -23,7 +23,7 @@ interface NButtonProps {
   loading?: boolean;
   icon?: React.ReactNode;
   fullWidth?: boolean;
-  style?: ViewStyle;
+  style?: StyleProp<ViewStyle>;
 }
 
 export function NButton({

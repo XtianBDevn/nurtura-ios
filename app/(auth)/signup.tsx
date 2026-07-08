@@ -16,17 +16,13 @@ import { NInput } from '@/components/NInput';
 import { useColors } from '@/hooks/useThemeColor';
 import { Spacing, Radius } from '@/lib/theme';
 
-type Step = 'form' | 'verify';
-
 export default function SignUpScreen() {
   const colors = useColors();
   const { signIn } = useAuthActions();
 
-  const [step, setStep] = useState<Step>('form');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [code, setCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -35,7 +31,7 @@ export default function SignUpScreen() {
     if (!name.trim()) e.name = 'Name is required';
     if (!email.trim()) e.email = 'Email is required';
     else if (!/\S+@\S+\.\S+/.test(email)) e.email = 'Invalid email';
-    if (password.length < 6) e.password = 'Minimum 6 characters';
+    if (password.length < 8) e.password = 'Minimum 8 characters';
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -50,26 +46,10 @@ export default function SignUpScreen() {
         name,
         flow: 'signUp',
       });
-      setStep('verify');
-    } catch (err: any) {
-      Alert.alert('Sign Up Failed', err.message || 'Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleVerify = async () => {
-    if (!code.trim()) return;
-    setLoading(true);
-    try {
-      await signIn('password', {
-        email,
-        code,
-        flow: 'email-verification',
-      });
+      // New account → straight into onboarding to build their profile.
       router.replace('/onboarding');
     } catch (err: any) {
-      Alert.alert('Verification Failed', err.message || 'Invalid code.');
+      Alert.alert('Sign Up Failed', err.message || 'Please try again.');
     } finally {
       setLoading(false);
     }
@@ -90,7 +70,7 @@ export default function SignUpScreen() {
           title="← Back"
           variant="ghost"
           size="sm"
-          onPress={() => step === 'verify' ? setStep('form') : router.back()}
+          onPress={() => router.back()}
           style={styles.back}
         />
 
@@ -102,77 +82,48 @@ export default function SignUpScreen() {
           <NText variant="title2" bold style={styles.logoText}>Nurtura</NText>
         </View>
 
-        {step === 'form' ? (
-          <>
-            <NText variant="title2" bold>Create your account</NText>
-            <NText variant="subheadline" muted style={styles.subtitle}>
-              Start your caregiving journey
-            </NText>
+        <NText variant="title2" bold>Create your account</NText>
+        <NText variant="subheadline" muted style={styles.subtitle}>
+          Start your caregiving journey
+        </NText>
 
-            <View style={styles.form}>
-              <NInput
-                label="NAME"
-                placeholder="Your full name"
-                value={name}
-                onChangeText={setName}
-                error={errors.name}
-                icon="person-outline"
-                autoCapitalize="words"
-              />
-              <NInput
-                label="EMAIL"
-                placeholder="you@example.com"
-                value={email}
-                onChangeText={setEmail}
-                error={errors.email}
-                icon="mail-outline"
-                keyboardType="email-address"
-                autoCapitalize="none"
-              />
-              <NInput
-                label="PASSWORD"
-                placeholder="Min. 6 characters"
-                value={password}
-                onChangeText={setPassword}
-                error={errors.password}
-                icon="lock-closed-outline"
-                secureTextEntry
-              />
-              <NButton
-                title="Create Account"
-                onPress={handleSignUp}
-                loading={loading}
-                fullWidth
-                size="lg"
-              />
-            </View>
-          </>
-        ) : (
-          <>
-            <NText variant="title2" bold>Check your email</NText>
-            <NText variant="subheadline" muted style={styles.subtitle}>
-              We sent a verification code to {email}
-            </NText>
-
-            <View style={styles.form}>
-              <NInput
-                label="VERIFICATION CODE"
-                placeholder="Enter code"
-                value={code}
-                onChangeText={setCode}
-                icon="key-outline"
-                keyboardType="number-pad"
-              />
-              <NButton
-                title="Verify & Continue"
-                onPress={handleVerify}
-                loading={loading}
-                fullWidth
-                size="lg"
-              />
-            </View>
-          </>
-        )}
+        <View style={styles.form}>
+          <NInput
+            label="NAME"
+            placeholder="Your full name"
+            value={name}
+            onChangeText={setName}
+            error={errors.name}
+            icon="person-outline"
+            autoCapitalize="words"
+          />
+          <NInput
+            label="EMAIL"
+            placeholder="you@example.com"
+            value={email}
+            onChangeText={setEmail}
+            error={errors.email}
+            icon="mail-outline"
+            keyboardType="email-address"
+            autoCapitalize="none"
+          />
+          <NInput
+            label="PASSWORD"
+                placeholder="Min. 8 characters"
+            value={password}
+            onChangeText={setPassword}
+            error={errors.password}
+            icon="lock-closed-outline"
+            secureTextEntry
+          />
+          <NButton
+            title="Create Account"
+            onPress={handleSignUp}
+            loading={loading}
+            fullWidth
+            size="lg"
+          />
+        </View>
 
         <View style={styles.switchRow}>
           <NText variant="subheadline" muted>

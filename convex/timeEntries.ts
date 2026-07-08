@@ -1,6 +1,7 @@
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
+import { assertOnTeam } from "./lib/authz";
 
 export const list = query({
   args: { limit: v.optional(v.number()) },
@@ -35,6 +36,7 @@ export const clockIn = mutation({
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Not authenticated");
+    await assertOnTeam(ctx, userId, args.careRecipientId);
 
     const now = new Date();
     return await ctx.db.insert("timeEntries", {
@@ -42,6 +44,7 @@ export const clockIn = mutation({
       userId,
       date: now.toISOString().split("T")[0],
       startTime: now.toTimeString().slice(0, 5),
+      startedAt: now.getTime(),
       notes: args.notes,
       status: "active",
     });
@@ -56,18 +59,23 @@ export const clockOut = mutation({
 
     const entry = await ctx.db.get(args.id);
     if (!entry) throw new Error("Not found");
+    // Only the caregiver who clocked in may clock out this entry
+    if (entry.userId !== userId)
+      throw new Error("Not authorized for this time entry");
 
     const now = new Date();
+    const endedAt = now.getTime();
     const endTime = now.toTimeString().slice(0, 5);
-
-    // Calculate duration
-    const [sh, sm] = entry.startTime.split(":").map(Number);
-    const [eh, em] = endTime.split(":").map(Number);
-    const durationMinutes = eh * 60 + em - (sh * 60 + sm);
+    const startedAt = entry.startedAt ?? entry._creationTime;
+    const durationMinutes = Math.max(
+      0,
+      Math.round((endedAt - startedAt) / 60_000),
+    );
 
     await ctx.db.patch(args.id, {
       endTime,
-      durationMinutes: Math.max(0, durationMinutes),
+      endedAt,
+      durationMinutes,
       status: "completed",
     });
   },

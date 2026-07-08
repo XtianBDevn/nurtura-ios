@@ -1,102 +1,185 @@
 /**
- * Nurtura Onboarding — 6-step flow
- * Step 0: Role Selection (Professional / Family)
- * Step 1: Profile (name, phone)
- * Step 2: Display & Accessibility
- * Step 3: Care Recipient
- * Step 4: Meet Ivy AI
- * Step 5: All Set!
+ * Nurtura Onboarding & Clinical Intake
+ *
+ * A guided, animated flow that builds the caregiver's profile and a
+ * comprehensive health profile for the first care recipient, then previews
+ * a personalized, rule-based care plan before entering the app.
+ *
+ * Steps: Role → Caregiver Profile → Accessibility → Recipient Basics →
+ * Conditions → Allergies & Meds → Mobility & Falls → Cognition →
+ * Independence (ADL/IADL) → Quality of Life → Care Plan → Meet Ivy → Done
  */
 import React, { useState, useEffect, useRef } from 'react';
-import {
-  View,
-  ScrollView,
-  StyleSheet,
-  Animated,
-  Alert,
-} from 'react-native';
+import { View, Animated, Alert } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useMutation } from 'convex/react';
 import * as Haptics from 'expo-haptics';
 import { NText } from '@/components/NText';
-import { NButton } from '@/components/NButton';
 import { NInput } from '@/components/NInput';
-import { NCard } from '@/components/NCard';
 import { SelectionCard } from '@/components/SelectionCard';
 import { EmojiPicker } from '@/components/EmojiPicker';
+import { StepShell } from '@/components/StepShell';
+import { MultiSelectChips } from '@/components/Chip';
+import { ScaleSelector } from '@/components/ScaleSelector';
+import { CarePlanCard } from '@/components/CarePlanCard';
 import { useColors } from '@/hooks/useThemeColor';
-import { Spacing, Radius } from '@/lib/theme';
 import { api } from '../../convex/_generated/api';
+import {
+  CONDITION_CATALOG,
+  ADL_CATALOG,
+  IADL_CATALOG,
+  generateCarePlan,
+  type Mobility,
+  type FallRisk,
+  type CognitiveStatus,
+  type HealthInput,
+} from '@/lib/carePlan';
 
-const TOTAL_STEPS = 6;
+const STEP = {
+  ROLE: 0,
+  PROFILE: 1,
+  ACCESS: 2,
+  RECIPIENT: 3,
+  CONDITIONS: 4,
+  ALLERGIES: 5,
+  MOBILITY: 6,
+  COGNITION: 7,
+  INDEPENDENCE: 8,
+  QOL: 9,
+  PLAN: 10,
+  IVY: 11,
+  DONE: 12,
+} as const;
+const TOTAL = 13;
 
 type Role = 'professional' | 'family' | null;
 type AgeGroup = 'under_65' | '65_plus' | null;
 type TextSize = 'small' | 'medium' | 'large' | 'extra-large';
 type CareType = 'senior' | 'disability' | 'childcare' | 'general';
 
+const QOL_QUESTIONS: { key: keyof NonNullable<HealthInput['qualityOfLife']>; label: string; low: string; high: string }[] = [
+  { key: 'mood', label: 'Overall mood', low: 'Low', high: 'Great' },
+  { key: 'pain', label: 'Pain level', low: 'None', high: 'Severe' },
+  { key: 'sleep', label: 'Sleep quality', low: 'Poor', high: 'Excellent' },
+  { key: 'social', label: 'Social connection', low: 'Isolated', high: 'Very connected' },
+  { key: 'energy', label: 'Energy level', low: 'Exhausted', high: 'Energetic' },
+];
+
 export default function OnboardingScreen() {
   const colors = useColors();
   const createProfile = useMutation(api.profiles.create);
   const createRecipient = useMutation(api.careRecipients.create);
+  const upsertHealth = useMutation(api.healthProfiles.upsert);
   const completeOnboarding = useMutation(api.profiles.completeOnboarding);
 
-  const [step, setStep] = useState(0);
+  const [step, setStep] = useState<number>(STEP.ROLE);
   const [loading, setLoading] = useState(false);
-  const fadeAnim = useRef(new Animated.Value(1)).current;
+  const [skipHealth, setSkipHealth] = useState(false);
+  const fade = useRef(new Animated.Value(1)).current;
 
-  // Step 0
+  // Caregiver
   const [role, setRole] = useState<Role>(null);
-  // Step 1
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [phone, setPhone] = useState('');
-  // Step 2
+  const [relationship, setRelationship] = useState('');
+  const [certifications, setCertifications] = useState('');
+  // Accessibility
   const [ageGroup, setAgeGroup] = useState<AgeGroup>(null);
   const [textSize, setTextSize] = useState<TextSize>('medium');
   const [highContrast, setHighContrast] = useState(false);
-  // Step 3
+  // Recipient
   const [recipientName, setRecipientName] = useState('');
   const [careType, setCareType] = useState<CareType>('senior');
   const [avatarEmoji, setAvatarEmoji] = useState('👴');
-  const [conditions, setConditions] = useState('');
-  // Step 4 - chat animation
+  const [dateOfBirth, setDateOfBirth] = useState('');
+  // Health
+  const [conditions, setConditions] = useState<string[]>([]);
+  const [otherConditions, setOtherConditions] = useState('');
+  const [allergiesText, setAllergiesText] = useState('');
+  const [medsText, setMedsText] = useState('');
+  const [mobility, setMobility] = useState<Mobility | null>(null);
+  const [fallRisk, setFallRisk] = useState<FallRisk | null>(null);
+  const [cognitiveStatus, setCognitiveStatus] = useState<CognitiveStatus | null>(null);
+  const [adlLevels, setAdlLevels] = useState<Record<string, number>>({});
+  const [iadlLevels, setIadlLevels] = useState<Record<string, number>>({});
+  const [qol, setQol] = useState<Record<string, number>>({});
+  // Ivy chat
   const [chatMessages, setChatMessages] = useState<string[]>([]);
 
-  const animateTransition = (next: number) => {
-    Animated.sequence([
-      Animated.timing(fadeAnim, { toValue: 0, duration: 150, useNativeDriver: true }),
-      Animated.timing(fadeAnim, { toValue: 1, duration: 200, useNativeDriver: true }),
-    ]).start();
-    setTimeout(() => setStep(next), 150);
-  };
+  const toList = (text: string) =>
+    text
+      .split(/[,\n]/)
+      .map((s) => s.trim())
+      .filter(Boolean);
 
-  const goNext = () => {
+  const buildHealthInput = (): HealthInput => ({
+    conditions,
+    allergies: toList(allergiesText),
+    currentMedications: toList(medsText),
+    mobility: mobility ?? undefined,
+    fallRisk: fallRisk ?? undefined,
+    cognitiveStatus: cognitiveStatus ?? undefined,
+    adl: ADL_CATALOG.map((a) => ({ key: a.key, level: adlLevels[a.key] ?? 2 })),
+    iadl: IADL_CATALOG.map((a) => ({ key: a.key, level: iadlLevels[a.key] ?? 2 })),
+    qualityOfLife:
+      Object.keys(qol).length > 0
+        ? {
+            mood: qol.mood ?? 2,
+            pain: qol.pain ?? 0,
+            sleep: qol.sleep ?? 2,
+            social: qol.social ?? 2,
+            energy: qol.energy ?? 2,
+          }
+        : undefined,
+  });
+
+  const animateTo = (next: number) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    animateTransition(step + 1);
-  };
-  const goBack = () => {
-    if (step > 0) animateTransition(step - 1);
+    Animated.sequence([
+      Animated.timing(fade, { toValue: 0, duration: 130, useNativeDriver: true }),
+      Animated.timing(fade, { toValue: 1, duration: 200, useNativeDriver: true }),
+    ]).start();
+    setTimeout(() => setStep(next), 130);
   };
 
-  // Step 4 chat animation
+  const next = () => {
+    // After recipient step, honor skip-health by jumping to Ivy.
+    if (step === STEP.RECIPIENT && (!recipientName.trim() || skipHealth)) {
+      animateTo(STEP.IVY);
+      return;
+    }
+    animateTo(step + 1);
+  };
+
+  const back = () => {
+    if (step === STEP.IVY && (!recipientName.trim() || skipHealth)) {
+      animateTo(STEP.RECIPIENT);
+      return;
+    }
+    if (step > 0) animateTo(step - 1);
+  };
+
+  // Ivy intro animation
   useEffect(() => {
-    if (step !== 4) return;
+    if (step !== STEP.IVY) return;
     const msgs = [
-      "Hi there! 👋 I'm Ivy, your Nurtura assistant.",
-      "I can walk you through the app, answer questions about caregiving...",
-      "On Plus, I'm available anytime. On Professional, I'm here 24/7. 🌿",
-      "Ready to finish setting up? Let's go! →",
+      "Hi there! 👋 I'm Ivy, your Nurtura care assistant.",
+      "I'll help you stay on top of medications, appointments, and daily care.",
+      recipientName.trim()
+        ? `I've tailored a care plan for ${recipientName.trim()} based on what you shared. 🌿`
+        : 'Add a care recipient anytime and I’ll build a personalized care plan. 🌿',
+      "Ready when you are — let's finish setting up!",
     ];
     setChatMessages([]);
     msgs.forEach((msg, i) => {
       setTimeout(() => {
         setChatMessages((prev) => [...prev, msg]);
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      }, (i + 1) * 1200);
+      }, (i + 1) * 1000);
     });
-  }, [step]);
+  }, [step, recipientName]);
 
   const handleComplete = async () => {
     setLoading(true);
@@ -106,18 +189,38 @@ export default function OnboardingScreen() {
         firstName,
         lastName,
         phone: phone || undefined,
+        relationship: role === 'family' ? relationship || undefined : undefined,
+        certifications: role === 'professional' ? certifications || undefined : undefined,
         ageGroup: ageGroup ?? undefined,
         textSize,
         highContrast,
       });
 
       if (recipientName.trim()) {
-        await createRecipient({
+        const conditionSummary = [
+          ...conditions.map(
+            (k) => CONDITION_CATALOG.find((c) => c.key === k)?.label ?? k,
+          ),
+          otherConditions.trim(),
+        ]
+          .filter(Boolean)
+          .join(', ');
+
+        const recipientId = await createRecipient({
           name: recipientName,
           careType,
           avatarEmoji,
-          conditions: conditions || undefined,
+          dateOfBirth: dateOfBirth || undefined,
+          conditions: conditionSummary || undefined,
         });
+
+        if (!skipHealth) {
+          await upsertHealth({
+            careRecipientId: recipientId,
+            ...buildHealthInput(),
+            otherConditions: otherConditions || undefined,
+          });
+        }
       }
 
       await completeOnboarding({});
@@ -130,36 +233,20 @@ export default function OnboardingScreen() {
     }
   };
 
-  const renderProgressBar = () => (
-    <View style={styles.progressContainer}>
-      {Array.from({ length: TOTAL_STEPS }).map((_, i) => (
-        <View
-          key={i}
-          style={[
-            styles.progressSegment,
-            {
-              backgroundColor: i <= step ? colors.primary : colors.surfaceMuted,
-            },
-          ]}
-        />
-      ))}
-    </View>
-  );
+  const toggle = (arr: string[], key: string) =>
+    arr.includes(key) ? arr.filter((k) => k !== key) : [...arr, key];
 
-  const renderStep = () => {
+  // ---- Step renderers ----
+  const renderInner = () => {
     switch (step) {
-      case 0:
+      case STEP.ROLE:
         return (
-          <View style={styles.stepContent}>
-            <View style={[styles.stepIcon, { backgroundColor: colors.primaryLight }]}>
-              <Ionicons name="leaf" size={32} color={colors.primary} />
-            </View>
-            <NText variant="title2" bold center>Welcome to Nurtura</NText>
-            <NText variant="subheadline" muted center style={styles.stepSub}>
-              Let's set up your caregiving hub
-            </NText>
-
-            <NText variant="headline" style={styles.label}>I am a...</NText>
+          <StepShell
+            stepIndex={step} totalSteps={TOTAL} fade={fade}
+            icon="leaf" title="Welcome to Nurtura"
+            subtitle="Let's set up your caregiving hub. First, who are you?"
+            onNext={next} nextDisabled={!role}
+          >
             <SelectionCard
               title="Professional Caregiver"
               subtitle="CNA, HHA, aide, or paid caregiver"
@@ -174,346 +261,317 @@ export default function OnboardingScreen() {
               selected={role === 'family'}
               onPress={() => setRole('family')}
             />
-
-            <NButton
-              title="Continue →"
-              onPress={goNext}
-              disabled={!role}
-              fullWidth
-              size="lg"
-              style={styles.nextBtn}
-            />
-          </View>
+          </StepShell>
         );
 
-      case 1:
+      case STEP.PROFILE:
         return (
-          <View style={styles.stepContent}>
-            <View style={[styles.stepIcon, { backgroundColor: colors.primaryLight }]}>
-              <Ionicons name="person-outline" size={32} color={colors.primary} />
-            </View>
-            <NText variant="title2" bold center>Your Profile</NText>
-            <NText variant="subheadline" muted center style={styles.stepSub}>
-              This helps your care team identify you
-            </NText>
-
+          <StepShell
+            stepIndex={step} totalSteps={TOTAL} fade={fade}
+            icon="person-outline" title="Your Profile"
+            subtitle="This helps your care team identify you"
+            onBack={back} onNext={next}
+            nextDisabled={!firstName.trim() || !lastName.trim()}
+          >
             <NInput label="FIRST NAME" placeholder="First name" value={firstName} onChangeText={setFirstName} />
             <NInput label="LAST NAME" placeholder="Last name" value={lastName} onChangeText={setLastName} />
             <NInput label="PHONE (OPTIONAL)" placeholder="(555) 123-4567" value={phone} onChangeText={setPhone} keyboardType="phone-pad" />
+            {role === 'family' && (
+              <NInput label="RELATIONSHIP (OPTIONAL)" placeholder="e.g. Daughter, Son, Spouse" value={relationship} onChangeText={setRelationship} />
+            )}
+            {role === 'professional' && (
+              <NInput label="CERTIFICATIONS (OPTIONAL)" placeholder="e.g. CNA, HHA" value={certifications} onChangeText={setCertifications} />
+            )}
+          </StepShell>
+        );
 
-            <View style={styles.navRow}>
-              <NButton title="← Back" variant="ghost" onPress={goBack} />
-              <NButton
-                title="Continue →"
-                onPress={goNext}
-                disabled={!firstName.trim() || !lastName.trim()}
-                size="lg"
-                style={{ flex: 1, marginLeft: Spacing.sm }}
+      case STEP.ACCESS:
+        return (
+          <StepShell
+            stepIndex={step} totalSteps={TOTAL} fade={fade}
+            icon="eye-outline" title="Display & Accessibility"
+            subtitle="Let's make Nurtura comfortable to use"
+            onBack={back} onNext={next}
+          >
+            <NText variant="headline" style={{ marginBottom: 12 }}>Age Group</NText>
+            <SelectionCard title="Under 65" selected={ageGroup === 'under_65'} onPress={() => setAgeGroup('under_65')} />
+            <SelectionCard
+              title="65 or Older" badge="Optimized for you"
+              selected={ageGroup === '65_plus'}
+              onPress={() => { setAgeGroup('65_plus'); setTextSize('large'); setHighContrast(true); }}
+            />
+            <NText variant="headline" style={{ marginTop: 20, marginBottom: 12 }}>Text Size</NText>
+            {(['small', 'medium', 'large', 'extra-large'] as TextSize[]).map((s) => {
+              const sizes = { small: 14, medium: 16, large: 20, 'extra-large': 24 };
+              return (
+                <SelectionCard
+                  key={s}
+                  title={s.charAt(0).toUpperCase() + s.slice(1).replace('-', ' ')}
+                  subtitle={`${sizes[s]}px`}
+                  selected={textSize === s}
+                  onPress={() => setTextSize(s)}
+                />
+              );
+            })}
+            <View style={{ marginTop: 8 }}>
+              <SelectionCard
+                title="High Contrast" subtitle="Bolder colors and sharper text"
+                ionIcon={highContrast ? 'contrast' : 'contrast-outline'}
+                selected={highContrast} onPress={() => setHighContrast(!highContrast)}
               />
             </View>
-          </View>
+          </StepShell>
         );
 
-      case 2:
+      case STEP.RECIPIENT:
         return (
-          <View style={styles.stepContent}>
-            <View style={[styles.stepIcon, { backgroundColor: colors.primaryLight }]}>
-              <Ionicons name="eye-outline" size={32} color={colors.primary} />
-            </View>
-            <NText variant="title2" bold center>Display & Accessibility</NText>
-            <NText variant="subheadline" muted center style={styles.stepSub}>
-              Let's make Nurtura comfortable for your eyes
-            </NText>
-
-            <NText variant="headline" style={styles.label}>Age Group</NText>
-            <SelectionCard
-              title="Under 65"
-              selected={ageGroup === 'under_65'}
-              onPress={() => setAgeGroup('under_65')}
-            />
-            <SelectionCard
-              title="65 or Older"
-              badge="Optimized for you"
-              selected={ageGroup === '65_plus'}
-              onPress={() => {
-                setAgeGroup('65_plus');
-                setTextSize('large');
-                setHighContrast(true);
-              }}
-            />
-
-            <NText variant="headline" style={styles.label}>Text Size</NText>
-            <View style={styles.sizeRow}>
-              {(['small', 'medium', 'large', 'extra-large'] as TextSize[]).map((s) => {
-                const sizes = { small: 14, medium: 16, large: 20, 'extra-large': 24 };
-                return (
-                  <SelectionCard
-                    key={s}
-                    title={s.charAt(0).toUpperCase() + s.slice(1).replace('-', ' ')}
-                    subtitle={`${sizes[s]}px`}
-                    selected={textSize === s}
-                    onPress={() => setTextSize(s)}
-                  />
-                );
-              })}
-            </View>
-
-            <SelectionCard
-              title="High Contrast"
-              subtitle="Bolder colors and sharper text"
-              ionIcon={highContrast ? 'contrast' : 'contrast-outline'}
-              selected={highContrast}
-              onPress={() => setHighContrast(!highContrast)}
-            />
-
-            <View style={styles.navRow}>
-              <NButton title="← Back" variant="ghost" onPress={goBack} />
-              <NButton title="Continue →" onPress={goNext} size="lg" style={{ flex: 1, marginLeft: Spacing.sm }} />
-            </View>
-          </View>
-        );
-
-      case 3:
-        return (
-          <View style={styles.stepContent}>
-            <View style={[styles.stepIcon, { backgroundColor: colors.primaryLight }]}>
-              <Ionicons name="heart-outline" size={32} color={colors.primary} />
-            </View>
-            <NText variant="title2" bold center>Who Are You Caring For?</NText>
-            <NText variant="subheadline" muted center style={styles.stepSub}>
-              You can add more later
-            </NText>
-
-            <NText variant="headline" style={styles.label}>Choose an Avatar</NText>
+          <StepShell
+            stepIndex={step} totalSteps={TOTAL} fade={fade}
+            icon="heart-outline" title="Who Are You Caring For?"
+            subtitle="We'll use this to personalize their care"
+            onBack={back} onNext={next}
+            onSkip={() => { setSkipHealth(true); setRecipientName(''); animateTo(STEP.IVY); }}
+          >
+            <NText variant="headline" style={{ marginBottom: 12 }}>Choose an Avatar</NText>
             <EmojiPicker selected={avatarEmoji} onSelect={setAvatarEmoji} />
-
-            <NInput
-              label="NAME"
-              placeholder="e.g. Mom, Dad, Sarah"
-              value={recipientName}
-              onChangeText={setRecipientName}
-              style={{ marginTop: Spacing.lg }}
-            />
-
-            <NText variant="headline" style={styles.label}>Care Type</NText>
-            <View style={styles.typeGrid}>
-              {(['senior', 'disability', 'childcare', 'general'] as CareType[]).map((t) => {
-                const icons: Record<CareType, string> = { senior: '👴', disability: '♿', childcare: '👶', general: '💚' };
-                return (
-                  <SelectionCard
-                    key={t}
-                    title={t.charAt(0).toUpperCase() + t.slice(1)}
-                    icon={icons[t]}
-                    selected={careType === t}
-                    onPress={() => setCareType(t)}
-                  />
-                );
-              })}
-            </View>
-
-            <NInput
-              label="CONDITIONS / NOTES (OPTIONAL)"
-              placeholder="Any conditions or special notes"
-              value={conditions}
-              onChangeText={setConditions}
-              multiline
-            />
-
-            <View style={styles.navRow}>
-              <NButton title="← Back" variant="ghost" onPress={goBack} />
-              <NButton title="Continue →" onPress={goNext} size="lg" style={{ flex: 1, marginLeft: Spacing.sm }} />
-            </View>
-            <NButton
-              title="Skip for now"
-              variant="ghost"
-              onPress={() => { setRecipientName(''); goNext(); }}
-              style={{ marginTop: Spacing.sm, alignSelf: 'center' }}
-            />
-          </View>
+            <NInput label="NAME" placeholder="e.g. Mom, Dad, Sarah" value={recipientName} onChangeText={setRecipientName} style={{ marginTop: 16 }} />
+            <NInput label="DATE OF BIRTH (OPTIONAL)" placeholder="MM/DD/YYYY" value={dateOfBirth} onChangeText={setDateOfBirth} />
+            <NText variant="headline" style={{ marginTop: 8, marginBottom: 12 }}>Care Type</NText>
+            {(['senior', 'disability', 'childcare', 'general'] as CareType[]).map((t) => {
+              const icons: Record<CareType, string> = { senior: '👴', disability: '♿', childcare: '👶', general: '💚' };
+              return (
+                <SelectionCard key={t} title={t.charAt(0).toUpperCase() + t.slice(1)} icon={icons[t]} selected={careType === t} onPress={() => setCareType(t)} />
+              );
+            })}
+          </StepShell>
         );
 
-      case 4:
+      case STEP.CONDITIONS:
         return (
-          <View style={styles.stepContent}>
-            <View style={[styles.stepIcon, { backgroundColor: colors.primaryLight }]}>
-              <Ionicons name="chatbubble-ellipses-outline" size={32} color={colors.primary} />
-            </View>
-            <NText variant="title2" bold center>Meet Ivy, Your Care Assistant</NText>
+          <StepShell
+            stepIndex={step} totalSteps={TOTAL} fade={fade}
+            icon="medical-outline" title="Health Conditions"
+            subtitle={`Select any that apply to ${recipientName.trim() || 'them'} — this tailors the care plan`}
+            onBack={back} onNext={next}
+          >
+            <MultiSelectChips
+              options={CONDITION_CATALOG}
+              selected={conditions}
+              onToggle={(k) => setConditions((c) => toggle(c, k))}
+            />
+            <NInput
+              label="ANYTHING ELSE? (OPTIONAL)"
+              placeholder="Other conditions or notes"
+              value={otherConditions} onChangeText={setOtherConditions} multiline
+              style={{ marginTop: 16 }}
+            />
+          </StepShell>
+        );
 
-            <View style={styles.chatContainer}>
+      case STEP.ALLERGIES:
+        return (
+          <StepShell
+            stepIndex={step} totalSteps={TOTAL} fade={fade}
+            icon="warning-outline" title="Allergies & Medications"
+            subtitle="Separate each item with a comma or new line"
+            onBack={back} onNext={next}
+          >
+            <NInput label="ALLERGIES (OPTIONAL)" placeholder="e.g. Penicillin, Peanuts" value={allergiesText} onChangeText={setAllergiesText} multiline />
+            <NInput label="CURRENT MEDICATIONS (OPTIONAL)" placeholder="e.g. Metformin, Lisinopril, Aspirin" value={medsText} onChangeText={setMedsText} multiline />
+            {toList(medsText).length >= 5 && (
+              <View className="rounded-xl p-3 mt-1" style={{ backgroundColor: colors.warningBg }}>
+                <NText variant="caption1" color={colors.warning}>
+                  Managing 5+ medications — we'll add medication management to the care plan.
+                </NText>
+              </View>
+            )}
+          </StepShell>
+        );
+
+      case STEP.MOBILITY:
+        return (
+          <StepShell
+            stepIndex={step} totalSteps={TOTAL} fade={fade}
+            icon="walk-outline" title="Mobility & Fall Risk"
+            subtitle="How do they get around?"
+            onBack={back} onNext={next}
+          >
+            <NText variant="headline" style={{ marginBottom: 12 }}>Mobility</NText>
+            {([
+              ['independent', 'Independent', 'Walks without help'],
+              ['cane', 'Uses a Cane', 'Some support needed'],
+              ['walker', 'Uses a Walker', 'Moderate support'],
+              ['wheelchair', 'Wheelchair', 'Limited mobility'],
+              ['bedbound', 'Bedbound', 'Full assistance'],
+            ] as [Mobility, string, string][]).map(([k, t, s]) => (
+              <SelectionCard key={k} title={t} subtitle={s} selected={mobility === k} onPress={() => setMobility(k)} />
+            ))}
+            <NText variant="headline" style={{ marginTop: 20, marginBottom: 12 }}>Fall Risk</NText>
+            {([
+              ['low', 'Low', 'No recent falls'],
+              ['medium', 'Medium', 'Occasional unsteadiness'],
+              ['high', 'High', 'History of falls'],
+            ] as [FallRisk, string, string][]).map(([k, t, s]) => (
+              <SelectionCard key={k} title={t} subtitle={s} selected={fallRisk === k} onPress={() => setFallRisk(k)} />
+            ))}
+          </StepShell>
+        );
+
+      case STEP.COGNITION:
+        return (
+          <StepShell
+            stepIndex={step} totalSteps={TOTAL} fade={fade}
+            icon="bulb-outline" title="Memory & Cognition"
+            subtitle="How is their memory and thinking?"
+            onBack={back} onNext={next}
+          >
+            {([
+              ['alert', 'Alert & Oriented', 'No memory concerns'],
+              ['mild', 'Mild Forgetfulness', 'Occasional reminders help'],
+              ['moderate', 'Moderate Impairment', 'Needs regular cues'],
+              ['severe', 'Significant Impairment', 'Needs constant support'],
+            ] as [CognitiveStatus, string, string][]).map(([k, t, s]) => (
+              <SelectionCard key={k} title={t} subtitle={s} selected={cognitiveStatus === k} onPress={() => setCognitiveStatus(k)} />
+            ))}
+          </StepShell>
+        );
+
+      case STEP.INDEPENDENCE:
+        return (
+          <StepShell
+            stepIndex={step} totalSteps={TOTAL} fade={fade}
+            icon="hand-left-outline" title="Daily Independence"
+            subtitle="0 = needs full help · 1 = needs some help · 2 = fully independent"
+            onBack={back} onNext={next}
+          >
+            <NText variant="headline" style={{ marginBottom: 14 }}>Daily Activities</NText>
+            {ADL_CATALOG.map((a) => (
+              <View key={a.key} style={{ marginBottom: 18 }}>
+                <NText variant="subheadline" style={{ marginBottom: 8 }}>{a.label}</NText>
+                <ScaleSelector
+                  steps={3}
+                  value={adlLevels[a.key] ?? null}
+                  onChange={(v) => setAdlLevels((m) => ({ ...m, [a.key]: v }))}
+                  labels={['Full help', 'Some help', 'Independent']}
+                />
+              </View>
+            ))}
+            <NText variant="headline" style={{ marginTop: 8, marginBottom: 14 }}>Household & Errands</NText>
+            {IADL_CATALOG.map((a) => (
+              <View key={a.key} style={{ marginBottom: 18 }}>
+                <NText variant="subheadline" style={{ marginBottom: 8 }}>{a.label}</NText>
+                <ScaleSelector
+                  steps={3}
+                  value={iadlLevels[a.key] ?? null}
+                  onChange={(v) => setIadlLevels((m) => ({ ...m, [a.key]: v }))}
+                  labels={['Full help', 'Some help', 'Independent']}
+                />
+              </View>
+            ))}
+          </StepShell>
+        );
+
+      case STEP.QOL:
+        return (
+          <StepShell
+            stepIndex={step} totalSteps={TOTAL} fade={fade}
+            icon="happy-outline" title="Quality of Life"
+            subtitle="A quick snapshot of how they're doing lately"
+            onBack={back} onNext={next}
+          >
+            {QOL_QUESTIONS.map((q) => (
+              <View key={q.key} style={{ marginBottom: 22 }}>
+                <NText variant="subheadline" style={{ marginBottom: 8 }}>{q.label}</NText>
+                <ScaleSelector
+                  steps={5}
+                  value={qol[q.key] ?? null}
+                  onChange={(v) => setQol((m) => ({ ...m, [q.key]: v }))}
+                  lowLabel={q.low}
+                  highLabel={q.high}
+                />
+              </View>
+            ))}
+          </StepShell>
+        );
+
+      case STEP.PLAN: {
+        const plan = generateCarePlan(buildHealthInput());
+        return (
+          <StepShell
+            stepIndex={step} totalSteps={TOTAL} fade={fade}
+            icon="sparkles" title="Personalized Care Plan"
+            subtitle={`Built from what you shared about ${recipientName.trim() || 'your recipient'}`}
+            onBack={back} onNext={next} nextLabel="Looks good →"
+          >
+            <CarePlanCard plan={plan} />
+            <NText variant="caption1" muted center style={{ marginTop: 16 }}>
+              You can refine this anytime from the care recipient's profile.
+            </NText>
+          </StepShell>
+        );
+      }
+
+      case STEP.IVY:
+        return (
+          <StepShell
+            stepIndex={step} totalSteps={TOTAL} fade={fade}
+            icon="chatbubble-ellipses-outline" title="Meet Ivy"
+            subtitle="Your AI care assistant"
+            onBack={back} onNext={next}
+          >
+            <View style={{ gap: 12 }}>
               {chatMessages.map((msg, i) => (
-                <Animated.View key={i} style={[styles.chatBubble, { backgroundColor: colors.primaryLight }]}>
-                  <View style={styles.chatHeader}>
-                    <View style={[styles.ivyBadge, { backgroundColor: colors.primary }]}>
-                      <Ionicons name="leaf" size={12} color="#FFF" />
+                <View key={i} className="rounded-2xl p-4" style={{ backgroundColor: colors.primaryLight, maxWidth: '88%' }}>
+                  <View className="flex-row items-center mb-1" style={{ gap: 4 }}>
+                    <View className="w-5 h-5 rounded-full items-center justify-center" style={{ backgroundColor: colors.primary }}>
+                      <Ionicons name="leaf" size={11} color="#FFF" />
                     </View>
                     <NText variant="caption2" bold color={colors.primary}>Ivy</NText>
                   </View>
                   <NText variant="subheadline">{msg}</NText>
-                </Animated.View>
+                </View>
               ))}
               {chatMessages.length < 4 && (
-                <View style={[styles.typingIndicator, { backgroundColor: colors.surfaceMuted }]}>
-                  <View style={[styles.dot, { backgroundColor: colors.textTertiary }]} />
-                  <View style={[styles.dot, { backgroundColor: colors.textTertiary, opacity: 0.6 }]} />
-                  <View style={[styles.dot, { backgroundColor: colors.textTertiary, opacity: 0.3 }]} />
+                <View className="flex-row rounded-2xl px-4 py-3 self-start" style={{ backgroundColor: colors.surfaceMuted, gap: 4 }}>
+                  {[1, 0.6, 0.3].map((o, i) => (
+                    <View key={i} className="w-2 h-2 rounded-full" style={{ backgroundColor: colors.textTertiary, opacity: o }} />
+                  ))}
                 </View>
               )}
             </View>
-
-            <View style={styles.navRow}>
-              <NButton title="← Back" variant="ghost" onPress={goBack} />
-              <NButton title="Continue →" onPress={goNext} size="lg" style={{ flex: 1, marginLeft: Spacing.sm }} />
-            </View>
-          </View>
+          </StepShell>
         );
 
-      case 5:
+      case STEP.DONE:
         return (
-          <View style={styles.stepContent}>
-            <View style={[styles.stepIcon, { backgroundColor: colors.primaryLight }]}>
-              <Ionicons name="sparkles" size={32} color={colors.primary} />
-            </View>
-            <NText variant="title2" bold center>You're All Set!</NText>
-            <NText variant="subheadline" muted center style={styles.stepSub}>
-              Your Nurtura hub is ready
-            </NText>
-
-            <View style={styles.summaryGrid}>
+          <StepShell
+            stepIndex={step} totalSteps={TOTAL} fade={fade}
+            icon="checkmark-circle" title="You're All Set!"
+            subtitle="Your Nurtura hub is ready to go"
+            onBack={back} onNext={handleComplete} nextLabel="Go to Dashboard →" loading={loading}
+          >
+            <View style={{ gap: 16 }}>
               {[
                 { icon: 'clipboard-outline', label: 'Log daily care activities' },
-                { icon: 'medkit-outline', label: 'Track medications' },
-                { icon: 'calendar-outline', label: 'Manage schedules' },
+                { icon: 'medkit-outline', label: 'Track medications & vitals' },
+                { icon: 'calendar-outline', label: 'Manage schedules & appointments' },
                 { icon: 'people-outline', label: 'Coordinate with your care team' },
-                { icon: 'link-outline', label: 'Sync with calendar & email' },
-                { icon: 'chatbubble-outline', label: 'Chat with Ivy' },
+                { icon: 'sparkles-outline', label: 'Follow a personalized care plan' },
+                { icon: 'chatbubble-outline', label: 'Ask Ivy anything' },
               ].map((item) => (
-                <View key={item.label} style={styles.summaryItem}>
+                <View key={item.label} className="flex-row items-center">
                   <Ionicons name={item.icon as any} size={20} color={colors.primary} />
-                  <NText variant="subheadline" style={{ marginLeft: Spacing.md, flex: 1 }}>{item.label}</NText>
+                  <NText variant="subheadline" style={{ marginLeft: 12, flex: 1 }}>{item.label}</NText>
                 </View>
               ))}
             </View>
-
-            <NButton
-              title="Go to Dashboard →"
-              onPress={handleComplete}
-              loading={loading}
-              fullWidth
-              size="lg"
-              style={styles.nextBtn}
-            />
-          </View>
+          </StepShell>
         );
+
+      default:
+        return null;
     }
   };
 
-  return (
-    <ScrollView
-      style={[styles.container, { backgroundColor: colors.background }]}
-      contentContainerStyle={styles.content}
-      keyboardShouldPersistTaps="handled"
-      showsVerticalScrollIndicator={false}
-    >
-      {renderProgressBar()}
-      <Animated.View style={{ opacity: fadeAnim }}>
-        {renderStep()}
-      </Animated.View>
-    </ScrollView>
-  );
+  return <View style={{ flex: 1, backgroundColor: colors.background }}>{renderInner()}</View>;
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1 },
-  content: {
-    paddingTop: 70,
-    paddingHorizontal: Spacing.xl,
-    paddingBottom: 40,
-  },
-  progressContainer: {
-    flexDirection: 'row',
-    gap: 4,
-    marginBottom: Spacing['3xl'],
-  },
-  progressSegment: {
-    flex: 1,
-    height: 4,
-    borderRadius: 2,
-  },
-  stepContent: {
-    paddingTop: Spacing.lg,
-  },
-  stepIcon: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    alignItems: 'center',
-    justifyContent: 'center',
-    alignSelf: 'center',
-    marginBottom: Spacing.xl,
-  },
-  stepSub: {
-    marginTop: Spacing.xs,
-    marginBottom: Spacing['2xl'],
-  },
-  label: {
-    marginTop: Spacing.xl,
-    marginBottom: Spacing.md,
-  },
-  sizeRow: {},
-  typeGrid: {},
-  navRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: Spacing['2xl'],
-  },
-  nextBtn: {
-    marginTop: Spacing['2xl'],
-  },
-  // Chat
-  chatContainer: {
-    marginTop: Spacing.xl,
-    gap: Spacing.md,
-  },
-  chatBubble: {
-    borderRadius: Radius.xl,
-    padding: Spacing.lg,
-    maxWidth: '85%',
-  },
-  chatHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.xs,
-    marginBottom: Spacing.xs,
-  },
-  ivyBadge: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  typingIndicator: {
-    flexDirection: 'row',
-    gap: 4,
-    borderRadius: Radius.xl,
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.md,
-    alignSelf: 'flex-start',
-    width: 60,
-    justifyContent: 'center',
-  },
-  dot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-  },
-  // Summary
-  summaryGrid: {
-    gap: Spacing.lg,
-  },
-  summaryItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-});
