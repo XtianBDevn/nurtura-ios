@@ -5,7 +5,7 @@ Read these files first when bootstrapping an agent for Nurtura iOS work.
 ## Always Read
 
 1. `nurtura-agentic-os-guide.md`
-   - Operating loop, agent roles, launch memory checklist.
+   - Internal agent workflow, agent roles, launch memory checklist.
 2. `agent-self-improvement-log.md`
    - Known agent failure modes and corrected rules.
 

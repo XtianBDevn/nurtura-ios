@@ -1,11 +1,14 @@
-# Nurtura Agentic OS And Second-Brain Guide
+# Nurtura Agent Workflow And Second-Brain Guide
 
-![Agentic OS loop](../assets/images/nurtura-agentic-os-loop.svg)
+![Agent workflow loop](../assets/images/nurtura-agentic-os-loop.svg)
 
 ## Purpose
-This knowledgebase turns Nurtura from a folder of code and PDFs into an
-operating system for launch. Human operators and AI agents can use the same
-source notes, runbooks, checklists, and campaign docs.
+Nurtura is an iOS app for caregiving. This folder is not the product.
+
+This knowledgebase is an internal second-brain and agent workflow layer for
+building, testing, documenting, and launching the Nurtura iOS app. Human
+operators and AI agents can use the same source notes, runbooks, checklists,
+and campaign docs without confusing the workflow system for the app itself.
 
 ## Self-Improvement Memory
 
@@ -34,7 +37,7 @@ second-brain-knowledgebase/
   copied-project-docs/
 ```
 
-## Agent Roles
+## Internal Agent Roles
 
 | Agent | Job | Output |
 | --- | --- | --- |
