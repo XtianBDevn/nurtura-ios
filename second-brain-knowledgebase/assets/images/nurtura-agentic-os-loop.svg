@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="700" viewBox="0 0 1200 700" role="img" aria-labelledby="title desc">
+  <title id="title">Nurtura Agentic OS loop</title>
+  <desc id="desc">Research, build, QA, submit, market, learn, and document loop for Nurtura.</desc>
+  <rect width="1200" height="700" fill="#f0fff4"/>
+  <style>.node{fill:#fff;stroke:#276749;stroke-width:2;rx:14}.text{font:22px Arial,sans-serif;fill:#1c4532;font-weight:700}.line{stroke:#2f855a;stroke-width:3;fill:none;marker-end:url(#arrow)}</style>
+  <defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#2f855a"/></marker></defs>
+  <text x="60" y="65" class="text">Nurtura Agentic OS Loop</text>
+  <rect x="500" y="90" width="210" height="80" class="node"/><text x="555" y="140" class="text">Research</text>
+  <rect x="790" y="210" width="210" height="80" class="node"/><text x="850" y="260" class="text">Build</text>
+  <rect x="790" y="450" width="210" height="80" class="node"/><text x="865" y="500" class="text">QA</text>
+  <rect x="500" y="560" width="210" height="80" class="node"/><text x="555" y="610" class="text">Submit</text>
+  <rect x="200" y="450" width="210" height="80" class="node"/><text x="260" y="500" class="text">Market</text>
+  <rect x="200" y="210" width="210" height="80" class="node"/><text x="260" y="260" class="text">Learn</text>
+  <path d="M710 130 C780 145 850 180 895 210" class="line"/><path d="M895 290 V450" class="line"/><path d="M790 500 C735 545 700 570 710 590" class="line"/><path d="M500 600 C430 570 365 535 305 530" class="line"/><path d="M305 450 V290" class="line"/><path d="M410 250 C470 210 500 170 500 130" class="line"/>
+</svg>

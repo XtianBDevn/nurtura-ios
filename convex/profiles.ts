@@ -48,7 +48,23 @@ export const create = mutation({
       .query("profiles")
       .withIndex("by_user", (q) => q.eq("userId", userId))
       .unique();
-    if (existing) throw new Error("Profile already exists");
+    if (existing) {
+      await ctx.db.patch(existing._id, {
+        role: args.role,
+        firstName: args.firstName,
+        lastName: args.lastName,
+        phone: args.phone,
+        certifications: args.certifications,
+        hourlyRate: args.hourlyRate,
+        relationship: args.relationship,
+        ageGroup: args.ageGroup,
+        textSize: args.textSize,
+        highContrast: args.highContrast,
+        simplifiedNav: args.simplifiedNav,
+        reducedMotion: args.reducedMotion,
+      });
+      return existing._id;
+    }
 
     return await ctx.db.insert("profiles", {
       userId,

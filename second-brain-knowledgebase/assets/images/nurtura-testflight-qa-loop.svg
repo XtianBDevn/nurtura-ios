@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="680" viewBox="0 0 1200 680" role="img" aria-labelledby="title desc">
+  <title id="title">Nurtura TestFlight QA loop</title>
+  <desc id="desc">Build, distribute, test iPhone and Watch, collect feedback, fix, and repeat.</desc>
+  <rect width="1200" height="680" fill="#eef6ff"/>
+  <style>.node{fill:#fff;stroke:#1a365d;stroke-width:2;rx:14}.text{font:22px Arial,sans-serif;fill:#102a43;font-weight:700}.small{font:16px Arial,sans-serif;fill:#334e68}.line{stroke:#2b6cb0;stroke-width:3;fill:none;marker-end:url(#arrow)}</style>
+  <defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#2b6cb0"/></marker></defs>
+  <text x="60" y="65" class="text">TestFlight And QA Loop</text>
+  <rect x="480" y="95" width="240" height="90" class="node"/><text x="545" y="145" class="text">Archive Build</text>
+  <rect x="780" y="230" width="240" height="90" class="node"/><text x="835" y="280" class="text">Distribute</text>
+  <rect x="650" y="470" width="240" height="90" class="node"/><text x="695" y="520" class="text">Watch QA</text>
+  <rect x="310" y="470" width="240" height="90" class="node"/><text x="360" y="520" class="text">iPhone QA</text>
+  <rect x="180" y="230" width="240" height="90" class="node"/><text x="225" y="280" class="text">Feedback</text>
+  <path d="M720 140 C800 150 870 190 900 230" class="line"/>
+  <path d="M900 320 C875 385 825 435 770 470" class="line"/>
+  <path d="M650 515 H550" class="line"/>
+  <path d="M430 470 C385 400 340 350 300 320" class="line"/>
+  <path d="M300 230 C335 150 410 120 480 140" class="line"/>
+</svg>

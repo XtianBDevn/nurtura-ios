@@ -6,6 +6,7 @@ import { ConvexReactClient } from 'convex/react';
 import { ConvexAuthProvider } from '@convex-dev/auth/react';
 import * as SplashScreen from 'expo-splash-screen';
 import * as SecureStore from 'expo-secure-store';
+import { Platform } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useColorScheme } from '@/hooks/useColorScheme';
@@ -13,11 +14,34 @@ import { Colors } from '@/lib/theme';
 
 SplashScreen.preventAutoHideAsync();
 
-const CONVEX_URL = process.env.EXPO_PUBLIC_CONVEX_URL || 'https://capable-stork-178.convex.cloud';
+const CONVEX_URL = process.env.EXPO_PUBLIC_CONVEX_URL || 'https://successful-shrimp-557.convex.cloud';
 const convex = new ConvexReactClient(CONVEX_URL);
 
-// Secure token storage for React Native (replaces localStorage)
-const secureStorage = {
+const webStorage = {
+  getItem: async (key: string) => {
+    try {
+      return globalThis.localStorage?.getItem(key) ?? null;
+    } catch {
+      return null;
+    }
+  },
+  setItem: async (key: string, value: string) => {
+    try {
+      globalThis.localStorage?.setItem(key, value);
+    } catch {
+      // silently fail
+    }
+  },
+  removeItem: async (key: string) => {
+    try {
+      globalThis.localStorage?.removeItem(key);
+    } catch {
+      // silently fail
+    }
+  },
+};
+
+const nativeSecureStorage = {
   getItem: async (key: string) => {
     try {
       return await SecureStore.getItemAsync(key);
@@ -41,6 +65,8 @@ const secureStorage = {
   },
 };
 
+const authStorage = Platform.OS === 'web' ? webStorage : nativeSecureStorage;
+
 export default function RootLayout() {
   const scheme = useColorScheme();
   const colors = Colors[scheme];
@@ -52,7 +78,7 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
-        <ConvexAuthProvider client={convex} storage={secureStorage}>
+        <ConvexAuthProvider client={convex} storage={authStorage}>
           <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
           <Stack
             screenOptions={{

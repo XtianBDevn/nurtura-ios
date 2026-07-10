@@ -13,7 +13,6 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useQuery, useMutation } from 'convex/react';
-import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
 import { useAuthActions } from '@convex-dev/auth/react';
 import { NText } from '@/components/NText';
@@ -22,6 +21,7 @@ import { NCard } from '@/components/NCard';
 import { NInput } from '@/components/NInput';
 import { SelectionCard } from '@/components/SelectionCard';
 import { useColors } from '@/hooks/useThemeColor';
+import { ImpactFeedbackStyle, NotificationFeedbackType, impact, notification } from '@/lib/haptics';
 import { Spacing, Radius } from '@/lib/theme';
 import { api } from '../../convex/_generated/api';
 
@@ -79,11 +79,11 @@ export default function MoreScreen() {
   }, [activeShift]);
 
   const handleToggleShift = async () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    impact(ImpactFeedbackStyle.Medium);
     try {
       if (activeShift) {
         await clockOut({ id: activeShift._id });
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        notification(NotificationFeedbackType.Success);
       } else {
         const recipientId = timeRecipientId ?? recipients?.[0]?._id;
         if (!recipientId) {
@@ -165,7 +165,7 @@ export default function MoreScreen() {
         dosage: medDosage.trim() || 'As directed',
         frequency: medFrequency.trim() || 'Daily',
       });
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      notification(NotificationFeedbackType.Success);
       setMedName('');
       setMedDosage('');
       setMedFrequency('');
@@ -457,7 +457,7 @@ export default function MoreScreen() {
             key={item.label}
             activeOpacity={0.6}
             onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              impact(ImpactFeedbackStyle.Light);
               setActiveModal(item.modal);
             }}
           >

@@ -11,12 +11,12 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useQuery, useMutation } from 'convex/react';
-import * as Haptics from 'expo-haptics';
 import { NText } from '@/components/NText';
 import { NButton } from '@/components/NButton';
 import { NInput } from '@/components/NInput';
 import { SelectionCard } from '@/components/SelectionCard';
 import { useColors } from '@/hooks/useThemeColor';
+import { NotificationFeedbackType, notification } from '@/lib/haptics';
 import { Spacing } from '@/lib/theme';
 import { api } from '../../convex/_generated/api';
 
@@ -70,7 +70,7 @@ export default function LogScreen() {
         description: description || undefined,
         moodScore: logType === 'mood' ? moodScore : undefined,
       });
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      notification(NotificationFeedbackType.Success);
       setSuccess(true);
       // Reset after brief display
       setTimeout(() => {

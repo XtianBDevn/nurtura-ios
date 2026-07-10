@@ -1,7 +1,7 @@
 import React from 'react';
 import { Pressable, View } from 'react-native';
-import * as Haptics from 'expo-haptics';
 import { NText } from './NText';
+import { selection } from '@/lib/haptics';
 
 interface ChipProps {
   label: string;
@@ -15,7 +15,7 @@ export function Chip({ label, emoji, selected, onPress }: ChipProps) {
   return (
     <Pressable
       onPress={() => {
-        Haptics.selectionAsync();
+        selection();
         onPress();
       }}
       className={`flex-row items-center rounded-full border px-4 py-2.5 mr-2 mb-2 ${

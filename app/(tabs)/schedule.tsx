@@ -13,13 +13,13 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useQuery, useMutation } from 'convex/react';
-import * as Haptics from 'expo-haptics';
 import { NText } from '@/components/NText';
 import { NButton } from '@/components/NButton';
 import { NCard } from '@/components/NCard';
 import { NInput } from '@/components/NInput';
 import { SelectionCard } from '@/components/SelectionCard';
 import { useColors } from '@/hooks/useThemeColor';
+import { NotificationFeedbackType, notification, selection } from '@/lib/haptics';
 import { Spacing, Radius } from '@/lib/theme';
 import { api } from '../../convex/_generated/api';
 
@@ -82,7 +82,7 @@ export default function ScheduleScreen() {
         date: selectedDate.toISOString().split('T')[0],
         startTime: startTime || undefined,
       });
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      notification(NotificationFeedbackType.Success);
       setShowAdd(false);
       setTitle('');
       setStartTime('');
@@ -137,7 +137,7 @@ export default function ScheduleScreen() {
                 disabled={!day}
                 onPress={() => {
                   if (!day) return;
-                  Haptics.selectionAsync();
+                  selection();
                   const d = new Date(selectedDate);
                   d.setDate(day);
                   setSelectedDate(d);

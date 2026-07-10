@@ -6,9 +6,9 @@ import {
   ViewStyle,
   StyleProp,
 } from 'react-native';
-import * as Haptics from 'expo-haptics';
 import { NText } from './NText';
 import { useColors } from '@/hooks/useThemeColor';
+import { impact } from '@/lib/haptics';
 import { Radius, Spacing } from '@/lib/theme';
 
 type Variant = 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger';
@@ -41,7 +41,7 @@ export function NButton({
 
   const handlePress = () => {
     if (disabled || loading) return;
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    impact();
     onPress();
   };
 

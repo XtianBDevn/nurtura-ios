@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="720" viewBox="0 0 1200 720" role="img" aria-labelledby="title desc">
+  <title id="title">Nurtura iOS and watchOS architecture</title>
+  <desc id="desc">Nurtura iOS app, Watch app, shared Swift package, Convex backend, HealthKit, notifications, and App Store Connect.</desc>
+  <rect width="1200" height="720" fill="#f6fbf7"/>
+  <style>.box{fill:#fff;stroke:#285943;stroke-width:2;rx:12}.text{font:23px Arial,sans-serif;fill:#173b2f;font-weight:700}.small{font:16px Arial,sans-serif;fill:#355c4a}.line{stroke:#3f7d5a;stroke-width:3;fill:none;marker-end:url(#arrow)}</style>
+  <defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#3f7d5a"/></marker></defs>
+  <text x="60" y="70" class="text">Nurtura Native App Architecture</text>
+  <rect x="60" y="150" width="240" height="130" class="box"/><text x="95" y="200" class="text">iPhone App</text><text x="95" y="235" class="small">SwiftUI, onboarding, care hub</text>
+  <rect x="60" y="420" width="240" height="130" class="box"/><text x="95" y="470" class="text">Apple Watch</text><text x="95" y="505" class="small">Quick tasks and reminders</text>
+  <rect x="430" y="260" width="290" height="150" class="box"/><text x="465" y="310" class="text">NurturaShared</text><text x="465" y="345" class="small">Models, Auth, Convex API</text><text x="465" y="375" class="small">iOS 17 + watchOS 10</text>
+  <rect x="850" y="130" width="250" height="120" class="box"/><text x="890" y="180" class="text">Convex Backend</text><text x="890" y="215" class="small">Profiles, care, sync</text>
+  <rect x="850" y="330" width="250" height="120" class="box"/><text x="890" y="380" class="text">Apple Services</text><text x="890" y="415" class="small">HealthKit, notifications</text>
+  <rect x="850" y="530" width="250" height="110" class="box"/><text x="890" y="575" class="text">App Store</text><text x="890" y="610" class="small">TestFlight + review</text>
+  <path d="M300 215 C360 250 380 300 430 320" class="line"/>
+  <path d="M300 485 C360 445 380 380 430 355" class="line"/>
+  <path d="M720 315 C780 260 805 205 850 190" class="line"/>
+  <path d="M720 350 C785 365 805 385 850 390" class="line"/>
+  <path d="M720 390 C805 465 810 560 850 585" class="line"/>
+</svg>

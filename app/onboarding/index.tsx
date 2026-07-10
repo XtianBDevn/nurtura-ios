@@ -10,11 +10,11 @@
  * Independence (ADL/IADL) → Quality of Life → Care Plan → Meet Ivy → Done
  */
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Animated, Alert } from 'react-native';
+import { View, Animated, Alert, ActivityIndicator } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useMutation } from 'convex/react';
-import * as Haptics from 'expo-haptics';
+import { useConvexAuth, useMutation } from 'convex/react';
+import { useAuthToken } from '@convex-dev/auth/react';
 import { NText } from '@/components/NText';
 import { NInput } from '@/components/NInput';
 import { SelectionCard } from '@/components/SelectionCard';
@@ -25,6 +25,7 @@ import { ScaleSelector } from '@/components/ScaleSelector';
 import { CarePlanCard } from '@/components/CarePlanCard';
 import { useColors } from '@/hooks/useThemeColor';
 import { api } from '../../convex/_generated/api';
+import { ImpactFeedbackStyle, NotificationFeedbackType, impact, notification } from '@/lib/haptics';
 import {
   CONDITION_CATALOG,
   ADL_CATALOG,
@@ -72,11 +73,15 @@ export default function OnboardingScreen() {
   const createRecipient = useMutation(api.careRecipients.create);
   const upsertHealth = useMutation(api.healthProfiles.upsert);
   const completeOnboarding = useMutation(api.profiles.completeOnboarding);
+  const { isLoading: authLoading, isAuthenticated: convexAuthenticated } = useConvexAuth();
+  const authToken = useAuthToken();
+  const hasAuthToken = authToken !== null;
 
   const [step, setStep] = useState<number>(STEP.ROLE);
   const [loading, setLoading] = useState(false);
   const [skipHealth, setSkipHealth] = useState(false);
   const fade = useRef(new Animated.Value(1)).current;
+  const authAlertShown = useRef(false);
 
   // Caregiver
   const [role, setRole] = useState<Role>(null);
@@ -136,7 +141,7 @@ export default function OnboardingScreen() {
   });
 
   const animateTo = (next: number) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    impact(ImpactFeedbackStyle.Light);
     Animated.sequence([
       Animated.timing(fade, { toValue: 0, duration: 130, useNativeDriver: true }),
       Animated.timing(fade, { toValue: 1, duration: 200, useNativeDriver: true }),
@@ -176,12 +181,31 @@ export default function OnboardingScreen() {
     msgs.forEach((msg, i) => {
       setTimeout(() => {
         setChatMessages((prev) => [...prev, msg]);
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        impact(ImpactFeedbackStyle.Light);
       }, (i + 1) * 1000);
     });
   }, [step, recipientName]);
 
+  useEffect(() => {
+    if (authLoading || hasAuthToken || convexAuthenticated || authAlertShown.current) return;
+
+    authAlertShown.current = true;
+    Alert.alert(
+      'Sign in required',
+      'Please sign in or create an account before finishing onboarding.',
+      [{ text: 'OK', onPress: () => router.replace('/(auth)/login') }],
+    );
+  }, [authLoading, hasAuthToken, convexAuthenticated]);
+
   const handleComplete = async () => {
+    if (!convexAuthenticated) {
+      Alert.alert(
+        'Still connecting',
+        'Nurtura is still connecting your secure session. Please wait a moment and try again.',
+      );
+      return;
+    }
+
     setLoading(true);
     try {
       await createProfile({
@@ -224,7 +248,7 @@ export default function OnboardingScreen() {
       }
 
       await completeOnboarding({});
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      notification(NotificationFeedbackType.Success);
       router.replace('/(tabs)');
     } catch (err: any) {
       Alert.alert('Error', err.message || 'Something went wrong.');
@@ -572,6 +596,20 @@ export default function OnboardingScreen() {
         return null;
     }
   };
+
+  if (authLoading || !hasAuthToken || !convexAuthenticated) {
+    return (
+      <View className="flex-1 items-center justify-center px-6" style={{ backgroundColor: colors.background }}>
+        <View className="h-14 w-14 items-center justify-center rounded-2xl" style={{ backgroundColor: colors.primary }}>
+          <Ionicons name="leaf" size={28} color="#FFF" />
+        </View>
+        <ActivityIndicator color={colors.primary} style={{ marginTop: 20 }} />
+        <NText variant="subheadline" muted center style={{ marginTop: 12 }}>
+          Preparing your secure setup...
+        </NText>
+      </View>
+    );
+  }
 
   return <View style={{ flex: 1, backgroundColor: colors.background }}>{renderInner()}</View>;
 }

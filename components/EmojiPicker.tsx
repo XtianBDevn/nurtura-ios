@@ -1,8 +1,8 @@
 import React from 'react';
 import { View, TouchableOpacity, StyleSheet } from 'react-native';
-import * as Haptics from 'expo-haptics';
 import { NText } from './NText';
 import { useColors } from '@/hooks/useThemeColor';
+import { impact } from '@/lib/haptics';
 import { Spacing, Radius } from '@/lib/theme';
 
 const EMOJIS = ['👴', '👵', '👶', '🧓', '👤', '💜', '🌻', '🐾'];
@@ -21,7 +21,7 @@ export function EmojiPicker({ selected, onSelect }: EmojiPickerProps) {
         <TouchableOpacity
           key={emoji}
           onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            impact();
             onSelect(emoji);
           }}
           style={[

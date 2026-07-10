@@ -1,7 +1,7 @@
 import React from 'react';
 import { Pressable, View } from 'react-native';
-import * as Haptics from 'expo-haptics';
 import { NText } from './NText';
+import { selection } from '@/lib/haptics';
 
 interface ScaleSelectorProps {
   /** Number of steps, e.g. 3 → 0,1,2 or 5 → 0..4 */
@@ -42,7 +42,7 @@ export function ScaleSelector({
             <Pressable
               key={i}
               onPress={() => {
-                Haptics.selectionAsync();
+                selection();
                 onChange(i);
               }}
               className={`flex-1 items-center justify-center rounded-lg border py-3 ${

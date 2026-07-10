@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   ScrollView,
@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useAuthActions } from '@convex-dev/auth/react';
+import { useAuthActions, useAuthToken } from '@convex-dev/auth/react';
 import { NText } from '@/components/NText';
 import { NButton } from '@/components/NButton';
 import { NInput } from '@/components/NInput';
@@ -19,12 +19,22 @@ import { Spacing, Radius } from '@/lib/theme';
 export default function SignUpScreen() {
   const colors = useColors();
   const { signIn } = useAuthActions();
+  const authToken = useAuthToken();
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [awaitingToken, setAwaitingToken] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    if (!awaitingToken || authToken === null) return;
+
+    setAwaitingToken(false);
+    setLoading(false);
+    router.replace('/');
+  }, [awaitingToken, authToken]);
 
   const validate = () => {
     const e: Record<string, string> = {};
@@ -40,17 +50,18 @@ export default function SignUpScreen() {
     if (!validate()) return;
     setLoading(true);
     try {
-      await signIn('password', {
+      const result = await signIn('password', {
         email,
         password,
         name,
         flow: 'signUp',
       });
-      // New account → straight into onboarding to build their profile.
-      router.replace('/onboarding');
+      if (!result.signingIn) {
+        throw new Error('Account creation did not complete. Please try again.');
+      }
+      setAwaitingToken(true);
     } catch (err: any) {
       Alert.alert('Sign Up Failed', err.message || 'Please try again.');
-    } finally {
       setLoading(false);
     }
   };

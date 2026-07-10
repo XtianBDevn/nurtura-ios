@@ -1,9 +1,9 @@
 import React from 'react';
 import { TouchableOpacity, View, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import * as Haptics from 'expo-haptics';
 import { NText } from './NText';
 import { useColors } from '@/hooks/useThemeColor';
+import { ImpactFeedbackStyle, impact } from '@/lib/haptics';
 import { Radius, Spacing } from '@/lib/theme';
 
 interface SelectionCardProps {
@@ -28,7 +28,7 @@ export function SelectionCard({
   const colors = useColors();
 
   const handlePress = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    impact(ImpactFeedbackStyle.Medium);
     onPress();
   };
 

@@ -1,8 +1,8 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import * as Haptics from 'expo-haptics';
 import { useColors } from '@/hooks/useThemeColor';
+import { ImpactFeedbackStyle, impact } from '@/lib/haptics';
 
 export default function TabLayout() {
   const colors = useColors();
@@ -27,7 +27,7 @@ export default function TabLayout() {
       }}
       screenListeners={{
         tabPress: () => {
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          impact(ImpactFeedbackStyle.Light);
         },
       }}
     >

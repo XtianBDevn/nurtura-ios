@@ -14,6 +14,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { router, Redirect } from 'expo-router';
 import { useConvexAuth, useQuery } from 'convex/react';
+import { useAuthToken } from '@convex-dev/auth/react';
 import { NText } from '@/components/NText';
 import { NButton } from '@/components/NButton';
 import { NCard } from '@/components/NCard';
@@ -41,10 +42,16 @@ const FEATURES = [
  */
 export default function LandingScreen() {
   const colors = useColors();
-  const { isLoading, isAuthenticated } = useConvexAuth();
-  const profile = useQuery(api.profiles.get, isAuthenticated ? {} : 'skip');
+  const { isLoading, isAuthenticated: convexAuthenticated } = useConvexAuth();
+  const authToken = useAuthToken();
+  const hasAuthToken = authToken !== null;
+  const profile = useQuery(api.profiles.get, convexAuthenticated ? {} : 'skip');
 
-  if (isLoading || (isAuthenticated && profile === undefined)) {
+  if (
+    isLoading ||
+    (hasAuthToken && !convexAuthenticated) ||
+    (convexAuthenticated && profile === undefined)
+  ) {
     return (
       <View style={[styles.splash, { backgroundColor: colors.background }]}>
         <View style={[styles.splashBadge, { backgroundColor: colors.primary }]}>
@@ -55,7 +62,7 @@ export default function LandingScreen() {
     );
   }
 
-  if (isAuthenticated) {
+  if (convexAuthenticated) {
     return <Redirect href={profile?.onboardingComplete ? '/(tabs)' : '/onboarding'} />;
   }
 
