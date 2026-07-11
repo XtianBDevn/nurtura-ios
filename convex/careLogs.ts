@@ -29,11 +29,21 @@ export const list = query({
         .query("profiles")
         .withIndex("by_user", (q) => q.eq("userId", log.userId))
         .unique();
+      const assigneeProfile = log.assigneeId
+        ? await ctx.db
+            .query("profiles")
+            .withIndex("by_user", (q) => q.eq("userId", log.assigneeId!))
+            .unique()
+        : null;
+
       enriched.push({
         ...log,
         userName: profile
           ? `${profile.firstName} ${profile.lastName}`
           : "Unknown",
+        assigneeName: assigneeProfile
+          ? `${assigneeProfile.firstName} ${assigneeProfile.lastName}`
+          : undefined,
       });
     }
     return enriched;
@@ -94,6 +104,8 @@ export const create = mutation({
     vitalType: v.optional(v.string()),
     vitalValue: v.optional(v.string()),
     vitalUnit: v.optional(v.string()),
+    assigneeId: v.optional(v.id("users")),
+    completed: v.optional(v.boolean()),
     mealType: v.optional(v.string()),
     moodScore: v.optional(v.number()),
   },
@@ -105,8 +117,51 @@ export const create = mutation({
     return await ctx.db.insert("careLogs", {
       ...args,
       userId,
+      completed: args.type === "task" ? args.completed ?? false : undefined,
       timestamp: Date.now(),
     });
+  },
+});
+
+export const update = mutation({
+  args: {
+    id: v.id("careLogs"),
+    title: v.optional(v.string()),
+    description: v.optional(v.string()),
+    assigneeId: v.optional(v.id("users")),
+    completed: v.optional(v.boolean()),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
+
+    const existing = await ctx.db.get(args.id);
+    if (!existing) throw new Error("Task not found");
+
+    await assertOnTeam(ctx, userId, existing.careRecipientId);
+
+    const clean: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(args)) {
+      if (key === "id") continue;
+      if (value !== undefined) clean[key] = value;
+    }
+
+    await ctx.db.patch(args.id, clean);
+    return args.id;
+  },
+});
+
+export const remove = mutation({
+  args: { id: v.id("careLogs") },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
+
+    const existing = await ctx.db.get(args.id);
+    if (!existing) throw new Error("Task not found");
+
+    await assertOnTeam(ctx, userId, existing.careRecipientId);
+    await ctx.db.delete(args.id);
   },
 });
 

@@ -11,6 +11,10 @@ export const stats = query({
         todayLogs: 0,
         activeMeds: 0,
         todaySchedule: 0,
+        completedSchedule: 0,
+        overdueSchedule: 0,
+        openSchedule: 0,
+        activeShift: null,
         upcomingSchedule: [],
         recentLogs: [],
       };
@@ -28,6 +32,8 @@ export const stats = query({
     let todayLogs = 0;
     let activeMeds = 0;
     let todaySchedule = 0;
+    let completedSchedule = 0;
+    let overdueSchedule = 0;
     const upcomingSchedule: {
       title: string;
       startTime?: string;
@@ -72,6 +78,13 @@ export const stats = query({
         .collect();
       todaySchedule += schedItems.length;
       for (const s of schedItems) {
+        if (s.completed) completedSchedule += 1;
+        if (!s.completed && s.startTime) {
+          const scheduledAt = new Date(`${today}T${s.startTime}`).getTime();
+          if (!Number.isNaN(scheduledAt) && scheduledAt < Date.now()) {
+            overdueSchedule += 1;
+          }
+        }
         upcomingSchedule.push({
           title: s.title,
           startTime: s.startTime,
@@ -83,6 +96,12 @@ export const stats = query({
       }
     }
 
+    const activeShift = await ctx.db
+      .query("timeEntries")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .filter((q) => q.eq(q.field("status"), "active"))
+      .first();
+
     upcomingSchedule.sort((a, b) =>
       (a.startTime ?? "").localeCompare(b.startTime ?? ""),
     );
@@ -92,6 +111,15 @@ export const stats = query({
       todayLogs,
       activeMeds,
       todaySchedule,
+      completedSchedule,
+      overdueSchedule,
+      openSchedule: Math.max(0, todaySchedule - completedSchedule),
+      activeShift: activeShift
+        ? {
+            id: activeShift._id,
+            startedAt: activeShift.startedAt ?? activeShift._creationTime,
+          }
+        : null,
       upcomingSchedule: upcomingSchedule.slice(0, 5),
     };
   },

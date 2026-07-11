@@ -48,9 +48,16 @@ export function NButton({
   const heights: Record<Size, number> = { sm: 36, md: 48, lg: 56 };
 
   const containerStyles: Record<Variant, ViewStyle> = {
-    primary: { backgroundColor: colors.primary },
+    primary: {
+      backgroundColor: colors.primary,
+      shadowColor: colors.primaryDark,
+      shadowOffset: { width: 0, height: 8 },
+      shadowOpacity: 0.18,
+      shadowRadius: 14,
+      elevation: 3,
+    },
     secondary: { backgroundColor: colors.primaryLight },
-    outline: { backgroundColor: 'transparent', borderWidth: 1.5, borderColor: colors.border },
+    outline: { backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border },
     ghost: { backgroundColor: 'transparent' },
     danger: { backgroundColor: colors.error },
   };
@@ -103,7 +110,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: Radius.lg,
+    borderRadius: Radius.md,
   },
   fullWidth: {
     width: '100%',

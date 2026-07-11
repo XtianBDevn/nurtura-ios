@@ -120,6 +120,14 @@ export const create = mutation({
     date: v.string(),
     startTime: v.optional(v.string()),
     endTime: v.optional(v.string()),
+    recurrenceType: v.optional(
+      v.union(
+        v.literal("daily"),
+        v.literal("weekly"),
+        v.literal("monthly"),
+      ),
+    ),
+    recurrenceCount: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
@@ -132,6 +140,67 @@ export const create = mutation({
       completed: false,
       createdBy: userId,
     });
+  },
+});
+
+export const update = mutation({
+  args: {
+    id: v.id("scheduleEntries"),
+    careRecipientId: v.id("careRecipients"),
+    type: v.union(
+      v.literal("shift"),
+      v.literal("appointment"),
+      v.literal("reminder"),
+      v.literal("medication"),
+      v.literal("task"),
+    ),
+    title: v.string(),
+    description: v.optional(v.string()),
+    date: v.string(),
+    startTime: v.optional(v.string()),
+    endTime: v.optional(v.string()),
+    recurrenceType: v.optional(
+      v.union(
+        v.literal("daily"),
+        v.literal("weekly"),
+        v.literal("monthly"),
+      ),
+    ),
+    recurrenceCount: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
+
+    const entry = await ctx.db.get(args.id);
+    if (!entry) throw new Error("Not found");
+    await assertOnTeam(ctx, userId, args.careRecipientId);
+
+    await ctx.db.patch(args.id, {
+      careRecipientId: args.careRecipientId,
+      type: args.type,
+      title: args.title,
+      description: args.description,
+      date: args.date,
+      startTime: args.startTime,
+      endTime: args.endTime,
+      recurrenceType: args.recurrenceType,
+      recurrenceCount: args.recurrenceCount,
+    });
+  },
+});
+
+export const remove = mutation({
+  args: { id: v.id("scheduleEntries") },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
+
+    const entry = await ctx.db.get(args.id);
+    if (!entry) throw new Error("Not found");
+    await assertOnTeam(ctx, userId, entry.careRecipientId);
+
+    await ctx.db.delete(args.id);
   },
 });
 

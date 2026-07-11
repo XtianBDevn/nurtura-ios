@@ -151,6 +151,9 @@ const schema = defineSchema({
     vitalType: v.optional(v.string()),
     vitalValue: v.optional(v.string()),
     vitalUnit: v.optional(v.string()),
+    // For tasks
+    assigneeId: v.optional(v.id("users")),
+    completed: v.optional(v.boolean()),
     // For meals
     mealType: v.optional(v.string()),
     // For mood
@@ -205,6 +208,14 @@ const schema = defineSchema({
     date: v.string(),
     startTime: v.optional(v.string()),
     endTime: v.optional(v.string()),
+    recurrenceType: v.optional(
+      v.union(
+        v.literal("daily"),
+        v.literal("weekly"),
+        v.literal("monthly"),
+      ),
+    ),
+    recurrenceCount: v.optional(v.number()),
     completed: v.boolean(),
     createdBy: v.id("users"),
   })

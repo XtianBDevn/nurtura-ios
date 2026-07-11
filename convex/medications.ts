@@ -54,6 +54,52 @@ export const toggleActive = mutation({
   },
 });
 
+export const update = mutation({
+  args: {
+    id: v.id("medications"),
+    careRecipientId: v.id("careRecipients"),
+    name: v.string(),
+    dosage: v.string(),
+    frequency: v.string(),
+    instructions: v.optional(v.string()),
+    timeOfDay: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
+
+    const existing = await ctx.db.get(args.id);
+    if (!existing) throw new Error("Medication not found");
+
+    await assertOnTeam(ctx, userId, args.careRecipientId);
+
+    await ctx.db.patch(args.id, {
+      careRecipientId: args.careRecipientId,
+      name: args.name,
+      dosage: args.dosage,
+      frequency: args.frequency,
+      instructions: args.instructions,
+      timeOfDay: args.timeOfDay,
+    });
+
+    return args.id;
+  },
+});
+
+export const remove = mutation({
+  args: { id: v.id("medications") },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
+
+    const med = await ctx.db.get(args.id);
+    if (!med) throw new Error("Medication not found");
+
+    await assertOnTeam(ctx, userId, med.careRecipientId);
+    await ctx.db.delete(args.id);
+  },
+});
+
 export const logMedication = mutation({
   args: {
     medicationId: v.id("medications"),

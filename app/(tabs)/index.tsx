@@ -29,6 +29,15 @@ export default function DashboardScreen() {
     primaryRecipient ? { careRecipientId: primaryRecipient._id } : 'skip',
   );
   const carePlan = health ? generateCarePlan(health as any) : null;
+  const dataLoading =
+    profile === undefined ||
+    stats === undefined ||
+    recipients === undefined ||
+    recentLogs === undefined;
+  const completionRate =
+    stats?.todaySchedule && stats.todaySchedule > 0
+      ? Math.round(((stats.completedSchedule ?? 0) / stats.todaySchedule) * 100)
+      : null;
 
   const greeting = () => {
     const hour = new Date().getHours();
@@ -36,6 +45,22 @@ export default function DashboardScreen() {
     if (hour < 17) return 'Good afternoon';
     return 'Good evening';
   };
+
+  if (dataLoading) {
+    return (
+      <View style={[styles.loadingScreen, { backgroundColor: colors.background }]}>
+        <View style={[styles.loadingBadge, { backgroundColor: colors.primary }]}>
+          <Ionicons name="leaf" size={28} color="#FFF" />
+        </View>
+        <NText variant="headline" bold style={{ marginTop: Spacing.lg }}>
+          Loading your care dashboard
+        </NText>
+        <NText variant="subheadline" muted center style={{ marginTop: Spacing.xs }}>
+          Gathering today's schedule, care logs, and plan.
+        </NText>
+      </View>
+    );
+  }
 
   return (
     <ScrollView
@@ -46,6 +71,9 @@ export default function DashboardScreen() {
       {/* Header */}
       <View style={styles.header}>
         <View>
+          <NText variant="caption1" color={colors.accent} bold style={styles.overline}>
+            CARE DESK
+          </NText>
           <NText variant="title2" bold>
             {greeting()}
             {profile?.firstName ? `, ${profile.firstName}` : ''}
@@ -61,6 +89,71 @@ export default function DashboardScreen() {
           size="sm"
         />
       </View>
+
+      <NCard style={styles.todayCard} elevated>
+        <View style={[styles.careRail, { backgroundColor: stats?.overdueSchedule ? colors.error : colors.primary }]} />
+        <View style={styles.todayHeader}>
+          <View>
+            <NText variant="caption1" color={colors.accent} bold style={styles.overline}>
+              TODAY'S RHYTHM
+            </NText>
+            <NText variant="title3" bold style={{ marginTop: 2 }}>
+              {completionRate === null ? 'Ready for care' : `${completionRate}% complete`}
+            </NText>
+          </View>
+          <View
+            style={[
+              styles.todayIcon,
+              { backgroundColor: stats?.overdueSchedule ? colors.errorBg : colors.primaryLight },
+            ]}
+          >
+            <Ionicons
+              name={stats?.overdueSchedule ? 'alert-circle' : 'checkmark-circle'}
+              size={24}
+              color={stats?.overdueSchedule ? colors.error : colors.success}
+            />
+          </View>
+        </View>
+        <NText variant="subheadline" muted style={{ marginTop: Spacing.sm }}>
+          {stats?.overdueSchedule
+            ? `${stats.overdueSchedule} care item${stats.overdueSchedule === 1 ? '' : 's'} need attention.`
+            : stats?.todaySchedule
+              ? `${stats.completedSchedule ?? 0} of ${stats.todaySchedule} scheduled items completed.`
+              : 'No scheduled items yet. Add tasks, appointments, or medication reminders.'}
+        </NText>
+        <View style={styles.quickActions}>
+          <TouchableOpacity
+            style={[styles.quickAction, { backgroundColor: colors.primaryLight }]}
+            activeOpacity={0.7}
+            onPress={() => router.push('/(tabs)/log')}
+          >
+            <Ionicons name="add-circle" size={18} color={colors.primary} />
+            <NText variant="footnote" color={colors.primary} bold style={{ marginLeft: Spacing.xs }}>
+              Log Care
+            </NText>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.quickAction, { backgroundColor: colors.surfaceMuted }]}
+            activeOpacity={0.7}
+            onPress={() => router.push('/(tabs)/schedule')}
+          >
+            <Ionicons name="calendar" size={18} color={colors.textSecondary} />
+            <NText variant="footnote" bold style={{ marginLeft: Spacing.xs }}>
+              Schedule
+            </NText>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.quickAction, { backgroundColor: colors.surfaceMuted }]}
+            activeOpacity={0.7}
+            onPress={() => router.push('/(tabs)/more')}
+          >
+            <Ionicons name={stats?.activeShift ? 'stopwatch' : 'time'} size={18} color={colors.textSecondary} />
+            <NText variant="footnote" bold style={{ marginLeft: Spacing.xs }}>
+              {stats?.activeShift ? 'On Shift' : 'Clock In'}
+            </NText>
+          </TouchableOpacity>
+        </View>
+      </NCard>
 
       {/* Stats Grid */}
       <View style={styles.statsGrid}>
@@ -94,7 +187,7 @@ export default function DashboardScreen() {
         <View style={styles.statHalf}>
           <StatCard
             title="Schedule"
-            value={stats?.todaySchedule ?? 0}
+            value={stats?.openSchedule ?? stats?.todaySchedule ?? 0}
             icon="calendar"
             color={colors.chart4}
             bgColor={`${colors.chart4}15`}
@@ -104,7 +197,7 @@ export default function DashboardScreen() {
 
       {/* Personalized Care Plan */}
       {carePlan && primaryRecipient && (
-        <View style={styles.sectionCard}>
+        <View style={[styles.sectionCard, styles.planWrap]}>
           <View style={styles.planHeader}>
             <NText variant="caption1" muted>
               {primaryRecipient.avatarEmoji} {primaryRecipient.name}'s plan
@@ -121,7 +214,7 @@ export default function DashboardScreen() {
       )}
 
       {/* Care Recipients */}
-      <NCard style={styles.sectionCard} padded={false}>
+      <NCard style={styles.sectionCard} padded={false} elevated>
         <View style={styles.sectionHeader}>
           <View style={styles.sectionTitleRow}>
             <Ionicons name="leaf" size={18} color={colors.chart4} />
@@ -167,7 +260,7 @@ export default function DashboardScreen() {
       </NCard>
 
       {/* Today's Schedule */}
-      <NCard style={styles.sectionCard} padded={false}>
+      <NCard style={styles.sectionCard} padded={false} elevated>
         <View style={styles.sectionHeader}>
           <View style={styles.sectionTitleRow}>
             <Ionicons name="time" size={18} color={colors.chart2} />
@@ -185,9 +278,11 @@ export default function DashboardScreen() {
         ) : (
           <View style={styles.listContainer}>
             {stats.upcomingSchedule.map((s, i) => (
-              <View
+              <TouchableOpacity
                 key={i}
                 style={[styles.scheduleRow, s.completed && { opacity: 0.5 }]}
+                activeOpacity={0.7}
+                onPress={() => router.push('/(tabs)/schedule')}
               >
                 {s.completed ? (
                   <View style={[styles.checkCircle, { backgroundColor: colors.successBg }]}>
@@ -210,14 +305,14 @@ export default function DashboardScreen() {
                 <View style={[styles.typeBadge, { backgroundColor: colors.surfaceMuted }]}>
                   <NText variant="caption2" muted style={{ textTransform: 'capitalize' }}>{s.type}</NText>
                 </View>
-              </View>
+              </TouchableOpacity>
             ))}
           </View>
         )}
       </NCard>
 
       {/* Recent Activity */}
-      <NCard style={styles.sectionCard} padded={false}>
+      <NCard style={styles.sectionCard} padded={false} elevated>
         <View style={styles.sectionHeader}>
           <View style={styles.sectionTitleRow}>
             <Ionicons name="pulse" size={18} color={colors.chart1} />
@@ -240,7 +335,12 @@ export default function DashboardScreen() {
         ) : (
           <View style={styles.listContainer}>
             {recentLogs.map((log) => (
-              <View key={log._id} style={styles.activityRow}>
+              <TouchableOpacity
+                key={log._id}
+                style={styles.activityRow}
+                activeOpacity={0.7}
+                onPress={() => router.push('/(tabs)/log')}
+              >
                 <NText variant="body">{log.recipientEmoji}</NText>
                 <View style={styles.activityInfo}>
                   <NText variant="subheadline">{log.title}</NText>
@@ -257,7 +357,7 @@ export default function DashboardScreen() {
                 <View style={[styles.typeBadge, { backgroundColor: colors.surfaceMuted }]}>
                   <NText variant="caption2" muted style={{ textTransform: 'capitalize' }}>{log.type}</NText>
                 </View>
-              </View>
+              </TouchableOpacity>
             ))}
           </View>
         )}
@@ -268,12 +368,25 @@ export default function DashboardScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  content: { padding: Spacing.xl, paddingBottom: 40 },
+  loadingScreen: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: Spacing['2xl'],
+  },
+  loadingBadge: {
+    width: 56,
+    height: 56,
+    borderRadius: Radius.xl,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  content: { padding: Spacing.xl, paddingBottom: 120 },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: Spacing.xl,
+    marginBottom: Spacing['2xl'],
   },
   statsGrid: {
     flexDirection: 'row',
@@ -282,7 +395,50 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.xl,
   },
   statHalf: { width: '47.5%' },
+  overline: {
+    textTransform: 'uppercase',
+  },
+  todayCard: {
+    marginBottom: Spacing.xl,
+    overflow: 'hidden',
+  },
+  careRail: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: 5,
+  },
+  todayHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  todayIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: Radius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  quickActions: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
+    marginTop: Spacing.lg,
+  },
+  quickAction: {
+    flex: 1,
+    minHeight: 42,
+    borderRadius: Radius.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+    paddingHorizontal: Spacing.sm,
+  },
   sectionCard: { marginBottom: Spacing.xl },
+  planWrap: {
+    backgroundColor: 'transparent',
+  },
   planHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -294,7 +450,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: Spacing.lg,
-    paddingBottom: Spacing.sm,
+    paddingBottom: Spacing.md,
   },
   sectionTitleRow: {
     flexDirection: 'row',
@@ -313,6 +469,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: Spacing.md,
     gap: Spacing.md,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: '#ECE8DE',
   },
   recipientInfo: { flex: 1 },
   scheduleRow: {
@@ -320,6 +478,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: Spacing.md,
     gap: Spacing.md,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: '#ECE8DE',
   },
   scheduleInfo: { flex: 1 },
   checkCircle: {
@@ -339,6 +499,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: Spacing.md,
     gap: Spacing.md,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: '#ECE8DE',
   },
   activityInfo: { flex: 1 },
 });

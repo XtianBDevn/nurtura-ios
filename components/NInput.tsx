@@ -33,8 +33,8 @@ export function NInput({ label, error, icon, secureTextEntry, style, ...props }:
         style={[
           styles.inputContainer,
           {
-            backgroundColor: colors.surfaceMuted,
-            borderColor: error ? colors.error : focused ? colors.primary : 'transparent',
+            backgroundColor: colors.card,
+            borderColor: error ? colors.error : focused ? colors.primary : colors.borderLight,
           },
         ]}
       >
@@ -85,15 +85,15 @@ const styles = StyleSheet.create({
   label: {
     marginBottom: Spacing.xs,
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: Radius.lg,
-    borderWidth: 2,
-    height: 48,
+    borderRadius: Radius.md,
+    borderWidth: 1,
+    minHeight: 52,
     paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.sm,
   },
   icon: {
     marginRight: Spacing.sm,
@@ -101,7 +101,8 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     ...Typography.body,
-    height: '100%',
+    minHeight: 24,
+    paddingVertical: 0,
   },
   eyeBtn: {
     padding: Spacing.xs,

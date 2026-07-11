@@ -39,8 +39,8 @@ export function SelectionCard({
       style={[
         styles.card,
         {
-          backgroundColor: selected ? colors.primaryLight : colors.surfaceMuted,
-          borderColor: selected ? colors.primary : 'transparent',
+          backgroundColor: selected ? colors.primaryLight : colors.card,
+          borderColor: selected ? colors.primary : colors.borderLight,
         },
       ]}
     >
@@ -79,9 +79,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: Spacing.lg,
-    borderRadius: Radius.xl,
-    borderWidth: 2,
+    borderRadius: Radius.lg,
+    borderWidth: 1,
     marginBottom: Spacing.sm,
+    shadowColor: '#10221D',
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.04,
+    shadowRadius: 12,
+    elevation: 1,
   },
   content: {
     flexDirection: 'row',

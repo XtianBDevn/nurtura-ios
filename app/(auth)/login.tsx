@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
   ScrollView,
@@ -25,14 +25,23 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [awaitingToken, setAwaitingToken] = useState(false);
+  const tokenTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (!awaitingToken || authToken === null) return;
 
+    if (tokenTimeout.current) {
+      clearTimeout(tokenTimeout.current);
+      tokenTimeout.current = null;
+    }
     setAwaitingToken(false);
     setLoading(false);
     router.replace('/');
   }, [awaitingToken, authToken]);
+
+  useEffect(() => () => {
+    if (tokenTimeout.current) clearTimeout(tokenTimeout.current);
+  }, []);
 
   const handleLogin = async () => {
     if (!email.trim() || !password.trim()) {
@@ -45,6 +54,15 @@ export default function LoginScreen() {
       if (!result.signingIn) {
         throw new Error('Sign in did not complete. Please try again.');
       }
+      if (tokenTimeout.current) clearTimeout(tokenTimeout.current);
+      tokenTimeout.current = setTimeout(() => {
+        setAwaitingToken(false);
+        setLoading(false);
+        Alert.alert(
+          'Still signing in',
+          'Nurtura did not receive a secure session token yet. Please try again.',
+        );
+      }, 10000);
       setAwaitingToken(true);
     } catch (err: any) {
       Alert.alert('Login Failed', err.message || 'Invalid email or password.');

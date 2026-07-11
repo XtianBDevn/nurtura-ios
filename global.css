@@ -9,20 +9,20 @@
  */
 @layer base {
   :root {
-    --background: 255 255 255;
+    --background: 247 245 240;
     --surface: 255 255 255;
-    --surface-muted: 244 244 245;
+    --surface-muted: 239 238 232;
     --card: 255 255 255;
 
-    --foreground: 9 9 11;
-    --muted: 113 113 122;
-    --muted-foreground: 161 161 170;
+    --foreground: 22 33 31;
+    --muted: 102 113 109;
+    --muted-foreground: 154 161 157;
 
-    --border: 228 228 231;
+    --border: 221 217 206;
 
-    --primary: 61 122 95;
-    --primary-light: 232 245 238;
-    --primary-dark: 45 90 71;
+    --primary: 39 104 85;
+    --primary-light: 230 240 235;
+    --primary-dark: 23 60 52;
 
     --success: 34 197 94;
     --warning: 245 158 11;
@@ -32,20 +32,20 @@
 
   @media (prefers-color-scheme: dark) {
     :root {
-      --background: 9 9 11;
-      --surface: 24 24 27;
-      --surface-muted: 39 39 42;
-      --card: 24 24 27;
+      --background: 16 22 20;
+      --surface: 24 33 30;
+      --surface-muted: 34 45 41;
+      --card: 24 33 30;
 
-      --foreground: 250 250 250;
-      --muted: 161 161 170;
-      --muted-foreground: 113 113 122;
+      --foreground: 245 242 234;
+      --muted: 180 189 184;
+      --muted-foreground: 126 139 133;
 
-      --border: 39 39 42;
+      --border: 46 58 53;
 
-      --primary: 78 155 118;
-      --primary-light: 26 46 36;
-      --primary-dark: 107 184 147;
+      --primary: 121 183 157;
+      --primary-light: 29 52 45;
+      --primary-dark: 182 217 201;
     }
   }
 }

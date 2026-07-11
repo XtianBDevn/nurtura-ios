@@ -63,7 +63,7 @@ export default function LandingScreen() {
   }
 
   if (convexAuthenticated) {
-    return <Redirect href={profile?.onboardingComplete ? '/(tabs)' : '/onboarding'} />;
+    return <Redirect href={profile?.onboardingComplete ? '/care-summary' : '/onboarding'} />;
   }
 
   return <Marketing colors={colors} />;

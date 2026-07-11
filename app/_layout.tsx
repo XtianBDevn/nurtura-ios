@@ -90,6 +90,7 @@ export default function RootLayout() {
             <Stack.Screen name="index" />
             <Stack.Screen name="(auth)" options={{ animation: 'fade' }} />
             <Stack.Screen name="onboarding" options={{ gestureEnabled: false }} />
+            <Stack.Screen name="care-summary" options={{ gestureEnabled: false }} />
             <Stack.Screen name="(tabs)" options={{ animation: 'fade' }} />
           </Stack>
         </ConvexAuthProvider>
