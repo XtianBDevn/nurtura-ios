@@ -1,6 +1,7 @@
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
+import { assertOnTeam, getTeamMembership } from "./lib/authz";
 
 export const list = query({
   args: {},
@@ -110,6 +111,7 @@ export const update = mutation({
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Not authenticated");
+    await assertOnTeam(ctx, userId, args.id);
 
     const { id, ...updates } = args;
     const clean: Record<string, unknown> = {};
@@ -123,6 +125,11 @@ export const update = mutation({
 export const getTeam = query({
   args: { careRecipientId: v.id("careRecipients") },
   handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return [];
+    if (!(await getTeamMembership(ctx, userId, args.careRecipientId)))
+      return [];
+
     const members = await ctx.db
       .query("careTeamMembers")
       .withIndex("by_care_recipient", (q) =>

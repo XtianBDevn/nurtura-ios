@@ -1,8 +1,8 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import * as Haptics from 'expo-haptics';
 import { useColors } from '@/hooks/useThemeColor';
+import { ImpactFeedbackStyle, impact } from '@/lib/haptics';
 
 export default function TabLayout() {
   const colors = useColors();
@@ -14,20 +14,38 @@ export default function TabLayout() {
         headerStyle: { backgroundColor: colors.background },
         headerTintColor: colors.text,
         headerShadowVisible: false,
+        headerTitleStyle: {
+          fontSize: 16,
+          fontWeight: '700',
+          color: colors.text,
+        },
         tabBarActiveTintColor: colors.tabBarActive,
         tabBarInactiveTintColor: colors.tabBarInactive,
         tabBarStyle: {
           backgroundColor: colors.tabBar,
           borderTopColor: colors.tabBarBorder,
+          borderTopWidth: 0,
+          height: 86,
+          paddingTop: 8,
+          paddingBottom: 24,
+          marginHorizontal: 14,
+          marginBottom: 10,
+          borderRadius: 18,
+          position: 'absolute',
+          shadowColor: '#10221D',
+          shadowOffset: { width: 0, height: 10 },
+          shadowOpacity: 0.12,
+          shadowRadius: 24,
+          elevation: 8,
         },
         tabBarLabelStyle: {
           fontSize: 11,
-          fontWeight: '600',
+          fontWeight: '700',
         },
       }}
       screenListeners={{
         tabPress: () => {
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          impact(ImpactFeedbackStyle.Light);
         },
       }}
     >

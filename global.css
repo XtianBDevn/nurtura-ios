@@ -1,0 +1,51 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * Nurtura design tokens as CSS variables (RGB triplets so Tailwind's
+ * `<alpha-value>` opacity modifiers work). Light values live on :root;
+ * the device dark scheme overrides them. Mirrors lib/theme.ts.
+ */
+@layer base {
+  :root {
+    --background: 247 245 240;
+    --surface: 255 255 255;
+    --surface-muted: 239 238 232;
+    --card: 255 255 255;
+
+    --foreground: 22 33 31;
+    --muted: 102 113 109;
+    --muted-foreground: 154 161 157;
+
+    --border: 221 217 206;
+
+    --primary: 39 104 85;
+    --primary-light: 230 240 235;
+    --primary-dark: 23 60 52;
+
+    --success: 34 197 94;
+    --warning: 245 158 11;
+    --error: 239 68 68;
+    --info: 59 130 246;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --background: 16 22 20;
+      --surface: 24 33 30;
+      --surface-muted: 34 45 41;
+      --card: 24 33 30;
+
+      --foreground: 245 242 234;
+      --muted: 180 189 184;
+      --muted-foreground: 126 139 133;
+
+      --border: 46 58 53;
+
+      --primary: 121 183 157;
+      --primary-light: 29 52 45;
+      --primary-dark: 182 217 201;
+    }
+  }
+}

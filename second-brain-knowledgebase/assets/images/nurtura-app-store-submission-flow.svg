@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="620" viewBox="0 0 1200 620" role="img" aria-labelledby="title desc">
+  <title id="title">Nurtura App Store submission flow</title>
+  <desc id="desc">Prepare metadata, archive, upload, TestFlight, submit, review, release.</desc>
+  <rect width="1200" height="620" fill="#f7f7fb"/>
+  <style>.box{fill:#fff;stroke:#2d3748;stroke-width:2;rx:12}.text{font:21px Arial,sans-serif;fill:#1a202c;font-weight:700}.small{font:15px Arial,sans-serif;fill:#4a5568}.line{stroke:#4a5568;stroke-width:3;fill:none;marker-end:url(#arrow)}</style>
+  <defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#4a5568"/></marker></defs>
+  <text x="60" y="65" class="text">Nurtura App Store Submission Flow</text>
+  <rect x="55" y="150" width="165" height="110" class="box"/><text x="92" y="190" class="text">Prepare</text><text x="82" y="220" class="small">Privacy, metadata</text>
+  <rect x="285" y="150" width="165" height="110" class="box"/><text x="330" y="190" class="text">Archive</text><text x="315" y="220" class="small">iOS + Watch</text>
+  <rect x="515" y="150" width="165" height="110" class="box"/><text x="558" y="190" class="text">Upload</text><text x="545" y="220" class="small">App Store Connect</text>
+  <rect x="745" y="150" width="165" height="110" class="box"/><text x="790" y="190" class="text">Test</text><text x="777" y="220" class="small">TestFlight</text>
+  <rect x="975" y="150" width="165" height="110" class="box"/><text x="1015" y="190" class="text">Submit</text><text x="1005" y="220" class="small">App Review</text>
+  <rect x="745" y="380" width="165" height="110" class="box"/><text x="785" y="420" class="text">Review</text><text x="773" y="450" class="small">Reply or fix</text>
+  <rect x="975" y="380" width="165" height="110" class="box"/><text x="1018" y="420" class="text">Release</text><text x="1002" y="450" class="small">Manual/phased</text>
+  <path d="M220 205 H285" class="line"/><path d="M450 205 H515" class="line"/><path d="M680 205 H745" class="line"/><path d="M910 205 H975" class="line"/><path d="M1057 260 V380" class="line"/><path d="M910 435 H975" class="line"/>
+</svg>

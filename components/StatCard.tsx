@@ -3,7 +3,6 @@ import { View, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { NText } from './NText';
 import { NCard } from './NCard';
-import { useColors } from '@/hooks/useThemeColor';
 import { Spacing, Radius } from '@/lib/theme';
 
 interface StatCardProps {
@@ -16,14 +15,14 @@ interface StatCardProps {
 
 export function StatCard({ title, value, icon, color, bgColor }: StatCardProps) {
   return (
-    <NCard>
+    <NCard elevated>
       <View style={styles.row}>
-        <NText variant="caption1" muted>{title}</NText>
+        <NText variant="caption1" muted style={styles.label}>{title}</NText>
         <View style={[styles.iconBadge, { backgroundColor: bgColor }]}>
           <Ionicons name={icon} size={16} color={color} />
         </View>
       </View>
-      <NText variant="title1" style={styles.value}>{value}</NText>
+      <NText variant="title1">{value}</NText>
     </NCard>
   );
 }
@@ -38,11 +37,11 @@ const styles = StyleSheet.create({
   iconBadge: {
     width: 32,
     height: 32,
-    borderRadius: Radius.md,
+    borderRadius: Radius.sm,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  value: {
-    letterSpacing: -1,
+  label: {
+    textTransform: 'uppercase',
   },
 });

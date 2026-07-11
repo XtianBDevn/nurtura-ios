@@ -2,7 +2,7 @@
  * More Tab — Settings hub
  * Medications, Messages, Time Tracking, Integrations, Subscription, Security, Profile
  */
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   ScrollView,
@@ -10,11 +10,9 @@ import {
   TouchableOpacity,
   Modal,
   Alert,
-  Switch,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useQuery, useMutation } from 'convex/react';
-import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
 import { useAuthActions } from '@convex-dev/auth/react';
 import { NText } from '@/components/NText';
@@ -23,6 +21,7 @@ import { NCard } from '@/components/NCard';
 import { NInput } from '@/components/NInput';
 import { SelectionCard } from '@/components/SelectionCard';
 import { useColors } from '@/hooks/useThemeColor';
+import { ImpactFeedbackStyle, NotificationFeedbackType, impact, notification } from '@/lib/haptics';
 import { Spacing, Radius } from '@/lib/theme';
 import { api } from '../../convex/_generated/api';
 
@@ -41,17 +40,69 @@ export default function MoreScreen() {
   const colors = useColors();
   const { signOut } = useAuthActions();
   const profile = useQuery(api.profiles.get);
-  const medications = useQuery(api.medications.list);
-  const messages = useQuery(api.messages.list);
+  const recipients = useQuery(api.careRecipients.list);
+  const medications = useQuery(api.medications.listAll);
+  const messages = useQuery(api.messages.listAll, {});
   const subscription = useQuery(api.subscriptions.get);
+  const activeShift = useQuery(api.timeEntries.getActive);
 
   const [activeModal, setActiveModal] = useState<ModalType>(null);
   const [medName, setMedName] = useState('');
   const [medDosage, setMedDosage] = useState('');
   const [medFrequency, setMedFrequency] = useState('');
+  const [medInstructions, setMedInstructions] = useState('');
+  const [medRecipientId, setMedRecipientId] = useState<string | null>(null);
+  const [editingMedicationId, setEditingMedicationId] = useState<string | null>(null);
+  const [timeRecipientId, setTimeRecipientId] = useState<string | null>(null);
+  const [messageRecipientId, setMessageRecipientId] = useState<string | null>(null);
+  const [messageText, setMessageText] = useState('');
+  const [elapsed, setElapsed] = useState('0:00:00');
   const [loading, setLoading] = useState(false);
 
   const createMed = useMutation(api.medications.create);
+  const updateMed = useMutation(api.medications.update);
+  const removeMed = useMutation(api.medications.remove);
+  const sendMessage = useMutation(api.messages.send);
+  const clockIn = useMutation(api.timeEntries.clockIn);
+  const clockOut = useMutation(api.timeEntries.clockOut);
+
+  // Live shift timer — ticks while a shift is active
+  useEffect(() => {
+    if (!activeShift) {
+      setElapsed('0:00:00');
+      return;
+    }
+    const startMs = activeShift.startedAt ?? activeShift._creationTime;
+    const tick = () => {
+      const diff = Math.max(0, Date.now() - startMs);
+      const h = Math.floor(diff / 3_600_000);
+      const m = Math.floor((diff % 3_600_000) / 60_000);
+      const s = Math.floor((diff % 60_000) / 1000);
+      setElapsed(`${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`);
+    };
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, [activeShift]);
+
+  const handleToggleShift = async () => {
+    impact(ImpactFeedbackStyle.Medium);
+    try {
+      if (activeShift) {
+        await clockOut({ id: activeShift._id });
+        notification(NotificationFeedbackType.Success);
+      } else {
+        const recipientId = timeRecipientId ?? recipients?.[0]?._id;
+        if (!recipientId) {
+          Alert.alert('No Recipient', 'Add a care recipient before tracking time.');
+          return;
+        }
+        await clockIn({ careRecipientId: recipientId as any });
+      }
+    } catch (err: any) {
+      Alert.alert('Error', err.message);
+    }
+  };
 
   const menuItems: MenuItem[] = [
     {
@@ -67,7 +118,7 @@ export default function MoreScreen() {
       subtitle: 'Team communication',
       color: colors.chart3,
       modal: 'messages',
-      badge: messages?.some((m) => !m.read) ? 'NEW' : undefined,
+      badge: messages?.length ? String(messages.length) : undefined,
     },
     {
       icon: 'time',
@@ -106,19 +157,94 @@ export default function MoreScreen() {
     ]);
   };
 
-  const handleAddMed = async () => {
-    if (!medName.trim()) return;
+  const resetMedicationForm = () => {
+    setMedName('');
+    setMedDosage('');
+    setMedFrequency('');
+    setMedInstructions('');
+    setMedRecipientId(recipients?.[0]?._id ?? null);
+    setEditingMedicationId(null);
+  };
+
+  const handleEditMed = (med: any) => {
+    setEditingMedicationId(med._id);
+    setMedName(med.name || '');
+    setMedDosage(med.dosage || '');
+    setMedFrequency(med.frequency || '');
+    setMedInstructions(med.instructions || '');
+    setMedRecipientId(med.careRecipientId);
+  };
+
+  const handleDeleteMed = (med: any) => {
+    Alert.alert('Remove Medication', `Remove ${med.name || 'this medication'} from ${med.recipientName || 'this patient'}?`, [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Remove',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await removeMed({ id: med._id });
+            notification(NotificationFeedbackType.Success);
+          } catch (err: any) {
+            Alert.alert('Error', err.message);
+          }
+        },
+      },
+    ]);
+  };
+
+  const handleSaveMedication = async () => {
+    if (!medName.trim()) {
+      Alert.alert('Name Required', 'Please enter a medication name.');
+      return;
+    }
+    const recipientId = medRecipientId ?? recipients?.[0]?._id;
+    if (!recipientId) {
+      Alert.alert('No Recipient', 'Add a care recipient before adding medications.');
+      return;
+    }
     setLoading(true);
     try {
-      await createMed({
-        name: medName,
-        dosage: medDosage || undefined,
-        frequency: medFrequency || 'daily',
-      });
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      setMedName('');
-      setMedDosage('');
-      setMedFrequency('');
+      if (editingMedicationId) {
+        await updateMed({
+          id: editingMedicationId as any,
+          careRecipientId: recipientId as any,
+          name: medName.trim(),
+          dosage: medDosage.trim() || 'As directed',
+          frequency: medFrequency.trim() || 'Daily',
+          instructions: medInstructions.trim() || undefined,
+        });
+      } else {
+        await createMed({
+          careRecipientId: recipientId as any,
+          name: medName.trim(),
+          dosage: medDosage.trim() || 'As directed',
+          frequency: medFrequency.trim() || 'Daily',
+          instructions: medInstructions.trim() || undefined,
+        });
+      }
+      notification(NotificationFeedbackType.Success);
+      resetMedicationForm();
+    } catch (err: any) {
+      Alert.alert('Error', err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSendMessage = async () => {
+    const recipientId = messageRecipientId ?? recipients?.[0]?._id;
+    if (!recipientId) {
+      Alert.alert('No Recipient', 'Add a care recipient before sending a message.');
+      return;
+    }
+    if (!messageText.trim()) return;
+
+    setLoading(true);
+    try {
+      await sendMessage({ careRecipientId: recipientId as any, content: messageText.trim() });
+      notification(NotificationFeedbackType.Success);
+      setMessageText('');
     } catch (err: any) {
       Alert.alert('Error', err.message);
     } finally {
@@ -136,28 +262,75 @@ export default function MoreScreen() {
               Track medications for your care recipients
             </NText>
 
-            {medications?.map((med) => (
-              <NCard key={med._id} style={{ marginBottom: Spacing.md }}>
-                <View style={styles.medRow}>
-                  <Ionicons name="medical" size={20} color={colors.chart2} />
-                  <View style={{ flex: 1, marginLeft: Spacing.md }}>
-                    <NText variant="headline">{med.name}</NText>
-                    {med.dosage && <NText variant="caption1" muted>{med.dosage}</NText>}
-                    {med.frequency && <NText variant="caption1" muted>{med.frequency}</NText>}
+            {!medications?.length ? (
+              <View style={styles.emptyState}>
+                <Ionicons name="medkit-outline" size={40} color={colors.textTertiary} />
+                <NText variant="subheadline" muted style={{ marginTop: Spacing.md }}>
+                  No medications yet
+                </NText>
+              </View>
+            ) : (
+              medications.map((med) => (
+                <NCard key={med._id} style={{ marginBottom: Spacing.md }}>
+                  <View style={styles.medRow}>
+                    <Ionicons name="medical" size={20} color={colors.chart2} />
+                    <View style={{ flex: 1, marginLeft: Spacing.md }}>
+                      <NText variant="headline">{med.name}</NText>
+                      <NText variant="caption1" muted>
+                        {med.recipientEmoji} {med.recipientName}
+                      </NText>
+                      <NText variant="caption1" muted>
+                        Dose: {med.dosage || 'As directed'} · Frequency: {med.frequency || 'Daily'}
+                      </NText>
+                      {med.instructions ? (
+                        <NText variant="caption1" muted>
+                          Instructions: {med.instructions}
+                        </NText>
+                      ) : null}
+                    </View>
+                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                      <TouchableOpacity onPress={() => handleEditMed(med)} style={{ marginRight: Spacing.sm }}>
+                        <Ionicons name="create-outline" size={18} color={colors.primary} />
+                      </TouchableOpacity>
+                      <TouchableOpacity onPress={() => handleDeleteMed(med)}>
+                        <Ionicons name="trash-outline" size={18} color={colors.error} />
+                      </TouchableOpacity>
+                    </View>
                   </View>
-                  <View style={[styles.statusDot, { backgroundColor: med.active ? colors.success : colors.textTertiary }]} />
-                </View>
-              </NCard>
-            ))}
+                </NCard>
+              ))
+            )}
 
             <View style={[styles.addSection, { borderTopColor: colors.border }]}>
               <NText variant="headline" bold style={{ marginBottom: Spacing.md }}>
-                Add Medication
+                {editingMedicationId ? 'Update Medication' : 'Add Medication'}
               </NText>
+              {(recipients?.length ?? 0) > 1 && (
+                <>
+                  <NText variant="footnote" bold muted style={{ marginBottom: Spacing.sm }}>FOR</NText>
+                  {recipients?.map((r) => (
+                    <SelectionCard
+                      key={r._id}
+                      title={r.name}
+                      icon={r.avatarEmoji || '👤'}
+                      selected={(medRecipientId ?? recipients?.[0]?._id) === r._id}
+                      onPress={() => setMedRecipientId(r._id)}
+                    />
+                  ))}
+                </>
+              )}
               <NInput label="NAME" placeholder="Medication name" value={medName} onChangeText={setMedName} />
               <NInput label="DOSAGE" placeholder="e.g. 50mg" value={medDosage} onChangeText={setMedDosage} />
               <NInput label="FREQUENCY" placeholder="e.g. twice daily" value={medFrequency} onChangeText={setMedFrequency} />
-              <NButton title="Add" onPress={handleAddMed} loading={loading} fullWidth />
+              <NInput
+                label="INSTRUCTIONS"
+                placeholder="e.g. Take with food"
+                value={medInstructions}
+                onChangeText={setMedInstructions}
+                multiline
+                style={{ minHeight: 96, textAlignVertical: 'top' }}
+              />
+              <NButton title={editingMedicationId ? 'Update' : 'Add'} onPress={handleSaveMedication} loading={loading} fullWidth />
             </View>
           </View>
         );
@@ -166,9 +339,24 @@ export default function MoreScreen() {
         return (
           <View style={styles.modalBody}>
             <NText variant="title3" bold>Messages</NText>
-            <NText variant="subheadline" muted style={{ marginBottom: Spacing.xl }}>
-              Care team communication
+            <NText variant="subheadline" muted style={{ marginBottom: Spacing.lg }}>
+              Shared with the care team for the selected patient.
             </NText>
+
+            {(recipients?.length ?? 0) > 0 && (
+              <View style={{ marginBottom: Spacing.md }}>
+                <NText variant="footnote" bold muted style={{ marginBottom: Spacing.sm }}>PATIENT</NText>
+                {recipients?.map((recipient) => (
+                  <SelectionCard
+                    key={recipient._id}
+                    title={recipient.name}
+                    icon={recipient.avatarEmoji || '👤'}
+                    selected={(messageRecipientId ?? recipients?.[0]?._id) === recipient._id}
+                    onPress={() => setMessageRecipientId(recipient._id)}
+                  />
+                ))}
+              </View>
+            )}
 
             {!messages?.length ? (
               <View style={styles.emptyState}>
@@ -178,29 +366,47 @@ export default function MoreScreen() {
                 </NText>
               </View>
             ) : (
-              messages.map((msg) => (
-                <NCard key={msg._id} style={{ marginBottom: Spacing.md }}>
-                  <View style={styles.msgRow}>
-                    <View style={[styles.msgAvatar, { backgroundColor: colors.primaryLight }]}>
-                      <NText variant="headline">{msg.senderName?.[0] || '?'}</NText>
+              <View style={{ gap: Spacing.md }}>
+                {messages.map((msg) => (
+                  <NCard key={msg._id}>
+                    <View style={styles.msgRow}>
+                      <View style={[styles.msgAvatar, { backgroundColor: colors.primaryLight }]}>
+                        <NText variant="headline">{msg.userName?.[0] || '?'}</NText>
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <View style={styles.msgHeader}>
+                          <NText variant="headline">{msg.userName || 'Unknown'}</NText>
+                          <NText variant="caption2" muted>
+                            {new Date(msg.timestamp).toLocaleString([], {
+                              month: 'short',
+                              day: 'numeric',
+                              hour: 'numeric',
+                              minute: '2-digit',
+                            })}
+                          </NText>
+                        </View>
+                        <NText variant="caption2" muted style={{ marginBottom: Spacing.xs }}>
+                          {msg.recipientEmoji} {msg.recipientName}
+                        </NText>
+                        <NText variant="subheadline" muted>{msg.content}</NText>
+                      </View>
                     </View>
-                    <View style={{ flex: 1 }}>
-                      <NText variant="headline">{msg.senderName || 'Unknown'}</NText>
-                      <NText variant="subheadline" muted numberOfLines={2}>{msg.content}</NText>
-                      <NText variant="caption2" muted style={{ marginTop: 2 }}>
-                        {new Date(msg.timestamp).toLocaleString([], {
-                          month: 'short',
-                          day: 'numeric',
-                          hour: 'numeric',
-                          minute: '2-digit',
-                        })}
-                      </NText>
-                    </View>
-                    {!msg.read && <View style={[styles.unreadDot, { backgroundColor: colors.primary }]} />}
-                  </View>
-                </NCard>
-              ))
+                  </NCard>
+                ))}
+              </View>
             )}
+
+            <View style={[styles.composeBox, { borderTopColor: colors.border }]}> 
+              <NInput
+                label="NEW MESSAGE"
+                placeholder="Write a message for the care team"
+                value={messageText}
+                onChangeText={setMessageText}
+                multiline
+                style={{ minHeight: 96, textAlignVertical: 'top' }}
+              />
+              <NButton title="Send" onPress={handleSendMessage} loading={loading} fullWidth />
+            </View>
           </View>
         );
 
@@ -212,16 +418,39 @@ export default function MoreScreen() {
               Professional caregiver time logs
             </NText>
 
+            {!activeShift && (recipients?.length ?? 0) > 1 && (
+              <>
+                <NText variant="footnote" bold muted style={{ marginBottom: Spacing.sm }}>CARE RECIPIENT</NText>
+                {recipients?.map((r) => (
+                  <SelectionCard
+                    key={r._id}
+                    title={r.name}
+                    icon={r.avatarEmoji || '👤'}
+                    selected={(timeRecipientId ?? recipients?.[0]?._id) === r._id}
+                    onPress={() => setTimeRecipientId(r._id)}
+                  />
+                ))}
+              </>
+            )}
+
             <NCard>
               <View style={styles.timerSection}>
-                <NText variant="largeTitle" bold center style={{ letterSpacing: -2 }}>
-                  0:00:00
+                <NText variant="largeTitle" bold center style={{ letterSpacing: -2, color: activeShift ? colors.primary : colors.text }}>
+                  {elapsed}
                 </NText>
                 <NText variant="footnote" muted center style={{ marginTop: Spacing.sm }}>
-                  Select a care recipient and start the timer
+                  {activeShift
+                    ? `On shift with ${activeShift.recipientName}`
+                    : 'Start the timer to log a shift'}
                 </NText>
                 <View style={styles.timerBtns}>
-                  <NButton title="Start Shift" onPress={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)} fullWidth size="lg" />
+                  <NButton
+                    title={activeShift ? 'End Shift' : 'Start Shift'}
+                    variant={activeShift ? 'danger' : 'primary'}
+                    onPress={handleToggleShift}
+                    fullWidth
+                    size="lg"
+                  />
                 </View>
               </View>
             </NCard>
@@ -301,10 +530,11 @@ export default function MoreScreen() {
             </NText>
 
             {[
-              { icon: 'lock-closed', title: 'End-to-End Encryption', desc: 'All data encrypted in transit and at rest', enabled: true },
-              { icon: 'finger-print', title: 'Biometric Lock', desc: 'Require Face ID / Touch ID', enabled: false },
-              { icon: 'shield-checkmark', title: 'HIPAA Compliance', desc: 'Healthcare-grade data protection', enabled: true },
-              { icon: 'document-text', title: 'Export Data', desc: 'Download a copy of your data', enabled: false },
+              { icon: 'lock-closed', title: 'Encryption in Transit', desc: 'All data is encrypted over TLS to the backend', status: 'on' },
+              { icon: 'key', title: 'Secure Token Storage', desc: 'Auth tokens stored in the iOS Keychain', status: 'on' },
+              { icon: 'shield-checkmark', title: 'Team-Based Access', desc: 'Care data is scoped to authorized team members', status: 'on' },
+              { icon: 'finger-print', title: 'Biometric App Lock', desc: 'Require Face ID / Touch ID to open', status: 'soon' },
+              { icon: 'document-text', title: 'Export My Data', desc: 'Download a copy of your data', status: 'soon' },
             ].map((item) => (
               <NCard key={item.title} style={{ marginBottom: Spacing.md }}>
                 <View style={styles.securityRow}>
@@ -313,12 +543,13 @@ export default function MoreScreen() {
                     <NText variant="headline">{item.title}</NText>
                     <NText variant="caption1" muted>{item.desc}</NText>
                   </View>
-                  <Switch
-                    value={item.enabled}
-                    onValueChange={() => {}}
-                    trackColor={{ false: colors.surfaceMuted, true: colors.primaryLight }}
-                    thumbColor={item.enabled ? colors.primary : colors.textTertiary}
-                  />
+                  {item.status === 'on' ? (
+                    <Ionicons name="checkmark-circle" size={22} color={colors.success} />
+                  ) : (
+                    <View style={[styles.currentBadge, { backgroundColor: colors.surfaceMuted }]}>
+                      <NText variant="caption2" muted bold>SOON</NText>
+                    </View>
+                  )}
                 </View>
               </NCard>
             ))}
@@ -333,8 +564,16 @@ export default function MoreScreen() {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        <View style={styles.screenHeader}>
+          <NText variant="caption1" color={colors.accent} bold style={styles.overline}>
+            WORKSPACE
+          </NText>
+          <NText variant="title2" bold>Settings & tools</NText>
+        </View>
+
         {/* Profile Card */}
-        <NCard style={styles.profileCard}>
+        <NCard style={styles.profileCard} elevated>
+          <View style={[styles.profileRail, { backgroundColor: colors.lavender }]} />
           <View style={styles.profileRow}>
             <View style={[styles.avatar, { backgroundColor: colors.primaryLight }]}>
               <Ionicons name="person" size={28} color={colors.primary} />
@@ -356,11 +595,11 @@ export default function MoreScreen() {
             key={item.label}
             activeOpacity={0.6}
             onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              impact(ImpactFeedbackStyle.Light);
               setActiveModal(item.modal);
             }}
           >
-            <NCard style={styles.menuItem}>
+            <NCard style={styles.menuItem} elevated>
               <View style={styles.menuRow}>
                 <View style={[styles.menuIcon, { backgroundColor: `${item.color}15` }]}>
                   <Ionicons name={item.icon} size={20} color={item.color} />
@@ -382,7 +621,7 @@ export default function MoreScreen() {
 
         {/* Integrations */}
         <TouchableOpacity activeOpacity={0.6} onPress={() => Alert.alert('Coming Soon', 'Integration settings coming soon!')}>
-          <NCard style={styles.menuItem}>
+          <NCard style={styles.menuItem} elevated>
             <View style={styles.menuRow}>
               <View style={[styles.menuIcon, { backgroundColor: `${colors.info}15` }]}>
                 <Ionicons name="link" size={20} color={colors.info} />
@@ -428,13 +667,30 @@ export default function MoreScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  content: { padding: Spacing.xl, paddingBottom: 40 },
-  profileCard: { marginBottom: Spacing.xl },
+  content: { padding: Spacing.xl, paddingBottom: 120 },
+  screenHeader: {
+    marginBottom: Spacing.lg,
+  },
+  overline: {
+    textTransform: 'uppercase',
+    marginBottom: Spacing.xs,
+  },
+  profileCard: {
+    marginBottom: Spacing.xl,
+    overflow: 'hidden',
+  },
+  profileRail: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: 5,
+  },
   profileRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.lg },
   avatar: {
     width: 56,
     height: 56,
-    borderRadius: 28,
+    borderRadius: Radius.md,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -447,7 +703,7 @@ const styles = StyleSheet.create({
   menuIcon: {
     width: 40,
     height: 40,
-    borderRadius: Radius.lg,
+    borderRadius: Radius.sm,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -472,13 +728,24 @@ const styles = StyleSheet.create({
   statusDot: { width: 10, height: 10, borderRadius: 5 },
   addSection: { borderTopWidth: 1, marginTop: Spacing.xl, paddingTop: Spacing.xl },
   // Messages
-  msgRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.md },
+  msgRow: { flexDirection: 'row', alignItems: 'flex-start', gap: Spacing.md },
+  msgHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: Spacing.xs,
+  },
   msgAvatar: {
     width: 40,
     height: 40,
     borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  composeBox: {
+    marginTop: Spacing.xl,
+    paddingTop: Spacing.xl,
+    borderTopWidth: 1,
   },
   unreadDot: { width: 8, height: 8, borderRadius: 4 },
   emptyState: { alignItems: 'center', paddingVertical: Spacing['3xl'] },

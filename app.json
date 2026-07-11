@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Nurtura",
-    "slug": "nurtura",
+    "slug": "nurturahealth",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -62,8 +62,9 @@
         "origin": false
       },
       "eas": {
-        "projectId": "YOUR_EAS_PROJECT_ID"
+        "projectId": "56894791-9b0c-48c4-b841-420ed57c78c2"
       }
-    }
+    },
+    "owner": "bonairmedia"
   }
 }

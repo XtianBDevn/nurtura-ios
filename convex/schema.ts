@@ -54,6 +54,69 @@ const schema = defineSchema({
     createdBy: v.id("users"),
   }).index("by_creator", ["createdBy"]),
 
+  // Clinical health profile for a care recipient (one per recipient).
+  // Drives the personalized care plan. All fields optional so intake can
+  // be completed incrementally.
+  healthProfiles: defineTable({
+    careRecipientId: v.id("careRecipients"),
+    createdBy: v.id("users"),
+    // Chronic conditions (multi-select keys) + free text
+    conditions: v.optional(v.array(v.string())),
+    otherConditions: v.optional(v.string()),
+    allergies: v.optional(v.array(v.string())),
+    // Current medications captured during intake (free-form names)
+    currentMedications: v.optional(v.array(v.string())),
+    // Mobility & safety
+    mobility: v.optional(
+      v.union(
+        v.literal("independent"),
+        v.literal("cane"),
+        v.literal("walker"),
+        v.literal("wheelchair"),
+        v.literal("bedbound"),
+      ),
+    ),
+    fallRisk: v.optional(
+      v.union(v.literal("low"), v.literal("medium"), v.literal("high")),
+    ),
+    // Cognition
+    cognitiveStatus: v.optional(
+      v.union(
+        v.literal("alert"),
+        v.literal("mild"),
+        v.literal("moderate"),
+        v.literal("severe"),
+      ),
+    ),
+    // Independence — each entry: { key, level } where level 0=dependent..2=independent
+    adl: v.optional(
+      v.array(v.object({ key: v.string(), level: v.number() })),
+    ),
+    iadl: v.optional(
+      v.array(v.object({ key: v.string(), level: v.number() })),
+    ),
+    // Quality-of-life self/observed report — each 0..4
+    qualityOfLife: v.optional(
+      v.object({
+        mood: v.number(),
+        pain: v.number(),
+        sleep: v.number(),
+        social: v.number(),
+        energy: v.number(),
+      }),
+    ),
+    // Reference info
+    bloodType: v.optional(v.string()),
+    primaryPhysician: v.optional(v.string()),
+    dietaryRestrictions: v.optional(v.array(v.string())),
+    emergencyNotes: v.optional(v.string()),
+    // Cached generated plan summary
+    carePlanSummary: v.optional(v.string()),
+    updatedAt: v.number(),
+  })
+    .index("by_care_recipient", ["careRecipientId"])
+    .index("by_creator", ["createdBy"]),
+
   // Care team membership
   careTeamMembers: defineTable({
     careRecipientId: v.id("careRecipients"),
@@ -88,6 +151,9 @@ const schema = defineSchema({
     vitalType: v.optional(v.string()),
     vitalValue: v.optional(v.string()),
     vitalUnit: v.optional(v.string()),
+    // For tasks
+    assigneeId: v.optional(v.id("users")),
+    completed: v.optional(v.boolean()),
     // For meals
     mealType: v.optional(v.string()),
     // For mood
@@ -134,12 +200,22 @@ const schema = defineSchema({
       v.literal("shift"),
       v.literal("appointment"),
       v.literal("reminder"),
+      v.literal("medication"),
+      v.literal("task"),
     ),
     title: v.string(),
     description: v.optional(v.string()),
     date: v.string(),
     startTime: v.optional(v.string()),
     endTime: v.optional(v.string()),
+    recurrenceType: v.optional(
+      v.union(
+        v.literal("daily"),
+        v.literal("weekly"),
+        v.literal("monthly"),
+      ),
+    ),
+    recurrenceCount: v.optional(v.number()),
     completed: v.boolean(),
     createdBy: v.id("users"),
   })
@@ -154,6 +230,8 @@ const schema = defineSchema({
     date: v.string(),
     startTime: v.string(),
     endTime: v.optional(v.string()),
+    startedAt: v.optional(v.number()),
+    endedAt: v.optional(v.number()),
     durationMinutes: v.optional(v.number()),
     notes: v.optional(v.string()),
     status: v.union(

@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="680" viewBox="0 0 1200 680" role="img" aria-labelledby="title desc">
+  <title id="title">Nurtura healthcare marketing funnel</title>
+  <desc id="desc">Awareness, education, trust, beta, activation, retention for Nurtura healthcare marketing.</desc>
+  <rect width="1200" height="680" fill="#fffaf0"/>
+  <style>.band{stroke:#9c4221;stroke-width:2;rx:14}.text{font:24px Arial,sans-serif;fill:#3b2116;font-weight:700}.small{font:17px Arial,sans-serif;fill:#6b4226}</style>
+  <text x="60" y="65" class="text">Nurtura Healthcare Marketing Funnel</text>
+  <rect x="160" y="120" width="880" height="80" class="band" fill="#fff7ed"/><text x="230" y="170" class="text">Awareness</text><text x="550" y="170" class="small">Caregiver stories, SEO, social</text>
+  <rect x="230" y="220" width="740" height="80" class="band" fill="#ffedd5"/><text x="300" y="270" class="text">Education</text><text x="580" y="270" class="small">Guides, checklists, privacy FAQ</text>
+  <rect x="300" y="320" width="600" height="80" class="band" fill="#fed7aa"/><text x="370" y="370" class="text">Trust</text><text x="560" y="370" class="small">Clear claims, fictional data</text>
+  <rect x="370" y="420" width="460" height="80" class="band" fill="#fdba74"/><text x="430" y="470" class="text">Beta</text><text x="585" y="470" class="small">TestFlight signup</text>
+  <rect x="440" y="520" width="320" height="80" class="band" fill="#fb923c"/><text x="480" y="570" class="text">Retention</text></svg>

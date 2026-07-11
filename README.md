@@ -1,133 +1,86 @@
 # Nurtura iOS
 
-Native iOS app for **Nurtura** — the AI-powered caregiving companion. Built with Expo (React Native) + Convex backend.
+Nurtura is a native iOS caregiving companion built with Expo, React Native, NativeWind, and Convex. It helps family and professional caregivers organize recipients, daily logs, medications, schedules, messages, and time tracking from one mobile app.
 
-> *Care, naturally* 🌿
+## What Works Now
+
+- Auth with Convex Auth password sign-in and iOS Keychain token storage.
+- Auth-aware routing: returning users go to onboarding or the main app automatically.
+- Comprehensive onboarding with caregiver profile, accessibility preferences, recipient setup, clinical intake, and a generated care plan.
+- Structured health intake: conditions, allergies, medications, mobility, fall risk, cognition, ADL/IADL independence, and quality of life.
+- Personalized care-plan engine in `/Users/christianbryant/nurtura-ios/lib/carePlan.ts`.
+- Dashboard with stats, recipients, recent activity, and the personalized care plan.
+- Care recipients, care logs, schedule entries, medications, messages, subscriptions, and shift time tracking.
+- NativeWind hybrid styling for new premium onboarding and care-plan UI, while preserving the existing theme system.
+- Unit tests for care-plan logic and care-plan UI.
 
 ## Stack
 
 | Layer | Technology |
-|-------|-----------|
-| Framework | Expo SDK 52 + React Native 0.76 |
-| Navigation | expo-router (file-based) |
-| Backend | Convex (shared with web app) |
-| Auth | @convex-dev/auth (email + password) |
-| Styling | React Native StyleSheet + custom design system |
-| Haptics | expo-haptics |
-| Icons | @expo/vector-icons (Ionicons) |
+|---|---|
+| App | Expo SDK 52, React Native 0.76, Expo Router |
+| Backend | Convex |
+| Auth | `@convex-dev/auth` |
+| Styling | NativeWind plus existing React Native design tokens |
+| Tests | Jest, jest-expo, React Native Testing Library |
+| Build | EAS |
 
-## Features
-
-- 🏠 **Dashboard** — Time-aware greeting, stat cards, care recipients, schedule, activity feed
-- ❤️ **Care Recipients** — Add/manage people you're caring for with emoji avatars
-- 📋 **Care Logging** — Quick-entry for tasks, vitals, meals, activities, mood tracking
-- 📅 **Schedule** — Mini calendar + event management (appointments, shifts, medications)
-- 💊 **Medications** — Track active meds with dosage and frequency
-- 💬 **Messages** — Care team communication
-- ⏱️ **Time Tracking** — Professional caregiver shift timer
-- 🤖 **Ivy AI** — AI care assistant (Plus/Professional plans)
-- 🔒 **Security** — Biometric lock, HIPAA-ready, end-to-end encryption
-- 🌙 **Dark Mode** — Full light/dark theme support
-- 📱 **6-Step Onboarding** — Role → Profile → Accessibility → Recipient → Meet Ivy → Done
-
-## Getting Started
-
-### Prerequisites
-
-- Node.js 18+
-- Expo CLI: `npm install -g expo-cli`
-- iOS Simulator (Xcode) or Expo Go on your device
-
-### Setup
+## Setup
 
 ```bash
-# Clone
-git clone https://github.com/XtianBDevn/nurtura-ios.git
-cd nurtura-ios
-
-# Install dependencies
 npm install
-
-# Configure environment
 cp .env.example .env
-# Edit .env with your Convex URL (default points to production)
-
-# Start dev server
 npx expo start
-
-# Press 'i' for iOS simulator, or scan QR with Expo Go
 ```
 
-### Convex Backend
+Then press `i` for iOS Simulator, or scan the QR code with Expo Go.
 
-This app shares its backend with the [Nurtura web app](https://github.com/XtianBDevn/nurtura). The `convex/` directory contains all backend functions (schema, queries, mutations).
+## Quality Gates
 
-If deploying your own Convex instance:
+Run these before any TestFlight build:
 
 ```bash
-npx convex dev    # Start local dev
-npx convex deploy # Deploy to production
+npm run typecheck
+npm run lint
+npm test
+npx expo export --platform ios --output-dir /tmp/nurtura-ios-export --no-minify
 ```
 
-## Project Structure
+Current verified state:
 
-```
-nurtura-ios/
-├── app/                        # Expo Router screens
-│   ├── _layout.tsx             # Root layout (ConvexProvider)
-│   ├── index.tsx               # Landing/welcome screen
-│   ├── (auth)/                 # Auth flow
-│   │   ├── login.tsx
-│   │   └── signup.tsx
-│   ├── onboarding/             # 6-step onboarding
-│   │   └── index.tsx
-│   └── (tabs)/                 # Main app (bottom tabs)
-│       ├── _layout.tsx         # Tab navigator
-│       ├── index.tsx           # Dashboard
-│       ├── recipients.tsx      # Care recipients
-│       ├── log.tsx             # Log activity
-│       ├── schedule.tsx        # Calendar + schedule
-│       └── more.tsx            # Settings hub
-├── components/                 # Reusable UI components
-│   ├── NText.tsx               # Typography
-│   ├── NButton.tsx             # Buttons (with haptics)
-│   ├── NCard.tsx               # Card containers
-│   ├── NInput.tsx              # Text inputs
-│   ├── StatCard.tsx            # Dashboard stat cards
-│   ├── SelectionCard.tsx       # Selectable option cards
-│   └── EmojiPicker.tsx         # Emoji avatar picker
-├── convex/                     # Convex backend (shared)
-├── hooks/                      # Custom hooks
-├── lib/                        # Theme, Convex client
-├── assets/                     # Images, fonts
-├── app.json                    # Expo config
-└── package.json
+- TypeScript: passing.
+- Expo lint: passing with zero problems.
+- Jest: passing.
+- iOS export: passing.
+
+## Important Docs
+
+- Code review: `/Users/christianbryant/nurtura-ios/docs/CODE_REVIEW.md`
+- Testing guide: `/Users/christianbryant/nurtura-ios/docs/TESTING.md`
+- Architecture: `/Users/christianbryant/nurtura-ios/docs/ARCHITECTURE.md`
+- Process flow: `/Users/christianbryant/nurtura-ios/docs/PROCESS_FLOW.md`
+- Screenshots: `/Users/christianbryant/nurtura-ios/docs/SCREENSHOTS.md`
+- TestFlight walkthrough: `/Users/christianbryant/nurtura-ios/docs/TESTFLIGHT_WALKTHROUGH.md`
+- Publishing guide: `/Users/christianbryant/nurtura-ios/docs/PUBLISHING_GUIDE.md`
+- 90-day marketing guide: `/Users/christianbryant/nurtura-ios/docs/MARKETING_90_DAY_GUIDE.md`
+
+## Project Map
+
+```text
+app/                 Expo Router screens
+app/onboarding/      Comprehensive onboarding and clinical intake
+app/(tabs)/          Home, Care, Log, Schedule, More
+components/          Shared React Native and NativeWind components
+convex/              Backend schema, queries, mutations, auth
+lib/carePlan.ts      Deterministic personalized care-plan engine
+docs/                Review, QA, screenshots, publishing, marketing
+__tests__/           Unit tests
 ```
 
-## Design System
+## Notes For Health Data
 
-- **Primary:** Sage Green `#3D7A5F`
-- **Typography:** iOS Human Interface Guidelines scale
-- **Dark Mode:** Full automatic support
-- **Haptics:** Tactile feedback on all interactions
-- **Animations:** Smooth fade transitions between onboarding steps
-
-## Building for App Store
-
-```bash
-# Install EAS CLI
-npm install -g eas-cli
-
-# Configure
-eas build:configure
-
-# Build for iOS
-eas build --platform ios
-
-# Submit to App Store
-eas submit --platform ios
-```
+Nurtura organizes caregiver-entered information and suggested routines. It is not a diagnosis tool, treatment tool, emergency service, or substitute for medical advice. Do not market HIPAA compliance, end-to-end encryption, Apple Watch support, biometric lock, or clinical decision support until those are fully implemented, reviewed, and backed by policy.
 
 ## License
 
-© 2026 Bon Air Media. All rights reserved.
+Copyright 2026 Bon Air Media. All rights reserved.

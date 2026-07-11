@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="760" viewBox="0 0 1200 760" role="img" aria-labelledby="title desc">
+  <title id="title">TestFlight Nurtura mockup</title>
+  <desc id="desc">Mock TestFlight setup for Nurtura tester groups and feedback areas.</desc>
+  <rect width="1200" height="760" fill="#eef6ff"/>
+  <rect x="60" y="55" width="1080" height="650" fill="#fff" stroke="#bdd7ee" rx="18"/>
+  <text x="100" y="115" font-family="Arial" font-size="30" font-weight="700" fill="#102a43">TestFlight - Nurtura Beta</text>
+  <rect x="100" y="170" width="300" height="120" fill="#f8fbff" stroke="#bdd7ee" rx="10"/>
+  <text x="130" y="215" font-family="Arial" font-size="22" font-weight="700" fill="#102a43">Family Caregivers</text>
+  <text x="130" y="250" font-family="Arial" font-size="18" fill="#334e68">Onboarding + reminders</text>
+  <rect x="450" y="170" width="300" height="120" fill="#f8fbff" stroke="#bdd7ee" rx="10"/>
+  <text x="480" y="215" font-family="Arial" font-size="22" font-weight="700" fill="#102a43">Professionals</text>
+  <text x="480" y="250" font-family="Arial" font-size="18" fill="#334e68">Care logs + time tracking</text>
+  <rect x="800" y="170" width="260" height="120" fill="#f8fbff" stroke="#bdd7ee" rx="10"/>
+  <text x="830" y="215" font-family="Arial" font-size="22" font-weight="700" fill="#102a43">Watch Testers</text>
+  <text x="830" y="250" font-family="Arial" font-size="18" fill="#334e68">Sync + wrist privacy</text>
+  <rect x="100" y="370" width="960" height="90" fill="#f0fff4" stroke="#68d391" rx="10"/>
+  <text x="130" y="425" font-family="Arial" font-size="22" font-weight="700" fill="#276749">Track sessions, crashes, screenshots, and tester feedback</text>
+  <rect x="100" y="530" width="960" height="90" fill="#fff7ed" stroke="#f6ad55" rx="10"/>
+  <text x="130" y="585" font-family="Arial" font-size="21" font-weight="700" fill="#9c4221">Resolve critical privacy, auth, and Watch stale-data bugs before review</text>
+</svg>

@@ -1,6 +1,7 @@
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
+import { assertOnTeam, getTeamMembership } from "./lib/authz";
 
 export const list = query({
   args: {
@@ -10,6 +11,8 @@ export const list = query({
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) return [];
+    if (!(await getTeamMembership(ctx, userId, args.careRecipientId)))
+      return [];
 
     const logs = await ctx.db
       .query("careLogs")
@@ -26,11 +29,21 @@ export const list = query({
         .query("profiles")
         .withIndex("by_user", (q) => q.eq("userId", log.userId))
         .unique();
+      const assigneeProfile = log.assigneeId
+        ? await ctx.db
+            .query("profiles")
+            .withIndex("by_user", (q) => q.eq("userId", log.assigneeId!))
+            .unique()
+        : null;
+
       enriched.push({
         ...log,
         userName: profile
           ? `${profile.firstName} ${profile.lastName}`
           : "Unknown",
+        assigneeName: assigneeProfile
+          ? `${assigneeProfile.firstName} ${assigneeProfile.lastName}`
+          : undefined,
       });
     }
     return enriched;
@@ -91,24 +104,82 @@ export const create = mutation({
     vitalType: v.optional(v.string()),
     vitalValue: v.optional(v.string()),
     vitalUnit: v.optional(v.string()),
+    assigneeId: v.optional(v.id("users")),
+    completed: v.optional(v.boolean()),
     mealType: v.optional(v.string()),
     moodScore: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Not authenticated");
+    await assertOnTeam(ctx, userId, args.careRecipientId);
 
     return await ctx.db.insert("careLogs", {
       ...args,
       userId,
+      completed: args.type === "task" ? args.completed ?? false : undefined,
       timestamp: Date.now(),
     });
   },
 });
 
+export const update = mutation({
+  args: {
+    id: v.id("careLogs"),
+    title: v.optional(v.string()),
+    description: v.optional(v.string()),
+    assigneeId: v.optional(v.id("users")),
+    completed: v.optional(v.boolean()),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
+
+    const existing = await ctx.db.get(args.id);
+    if (!existing) throw new Error("Task not found");
+
+    await assertOnTeam(ctx, userId, existing.careRecipientId);
+
+    const clean: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(args)) {
+      if (key === "id") continue;
+      if (value !== undefined) clean[key] = value;
+    }
+
+    await ctx.db.patch(args.id, clean);
+    return args.id;
+  },
+});
+
+export const remove = mutation({
+  args: { id: v.id("careLogs") },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
+
+    const existing = await ctx.db.get(args.id);
+    if (!existing) throw new Error("Task not found");
+
+    await assertOnTeam(ctx, userId, existing.careRecipientId);
+    await ctx.db.delete(args.id);
+  },
+});
+
+const EMPTY_STATS = {
+  total: 0,
+  today: 0,
+  thisWeek: 0,
+  byType: { task: 0, vital: 0, meal: 0, note: 0, activity: 0, mood: 0 },
+};
+
 export const stats = query({
   args: { careRecipientId: v.id("careRecipients") },
   handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return EMPTY_STATS;
+    if (!(await getTeamMembership(ctx, userId, args.careRecipientId)))
+      return EMPTY_STATS;
+
     const logs = await ctx.db
       .query("careLogs")
       .withIndex("by_care_recipient", (q) =>

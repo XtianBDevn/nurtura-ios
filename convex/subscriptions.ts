@@ -1,5 +1,5 @@
 import { getAuthUserId } from "@convex-dev/auth/server";
-import { mutation, query } from "./_generated/server";
+import { internalMutation, mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 
 // Get current user's subscription
@@ -40,8 +40,11 @@ export const initFree = mutation({
   },
 });
 
-// Update subscription after Stripe webhook
-export const updateFromStripe = mutation({
+// Update subscription from a payment-provider webhook.
+// INTERNAL ONLY: must never be exposed to clients. Call it from a
+// webhook httpAction in convex/http.ts after verifying the provider's
+// signature (see docs/PAYMENTS_GUIDE.md).
+export const updateFromStripe = internalMutation({
   args: {
     stripeCustomerId: v.string(),
     stripeSubscriptionId: v.string(),
@@ -94,24 +97,7 @@ export const updateFromStripe = mutation({
   },
 });
 
-// Link Stripe customer to user subscription
-export const linkStripeCustomer = mutation({
-  args: {
-    stripeCustomerId: v.string(),
-  },
-  handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) throw new Error("Not authenticated");
-
-    const sub = await ctx.db
-      .query("subscriptions")
-      .withIndex("by_user", (q) => q.eq("userId", userId))
-      .first();
-
-    if (sub) {
-      await ctx.db.patch(sub._id, {
-        stripeCustomerId: args.stripeCustomerId,
-      });
-    }
-  },
-});
+// NOTE: the old client-callable `linkStripeCustomer` mutation was removed —
+// it let any signed-in user attach an arbitrary Stripe customer ID to their
+// subscription (privilege escalation). Link customers server-side when
+// creating the checkout session instead (see docs/PAYMENTS_GUIDE.md).

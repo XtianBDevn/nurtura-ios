@@ -1,9 +1,9 @@
 import React from 'react';
 import { TouchableOpacity, View, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import * as Haptics from 'expo-haptics';
 import { NText } from './NText';
 import { useColors } from '@/hooks/useThemeColor';
+import { ImpactFeedbackStyle, impact } from '@/lib/haptics';
 import { Radius, Spacing } from '@/lib/theme';
 
 interface SelectionCardProps {
@@ -28,7 +28,7 @@ export function SelectionCard({
   const colors = useColors();
 
   const handlePress = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    impact(ImpactFeedbackStyle.Medium);
     onPress();
   };
 
@@ -39,8 +39,8 @@ export function SelectionCard({
       style={[
         styles.card,
         {
-          backgroundColor: selected ? colors.primaryLight : colors.surfaceMuted,
-          borderColor: selected ? colors.primary : 'transparent',
+          backgroundColor: selected ? colors.primaryLight : colors.card,
+          borderColor: selected ? colors.primary : colors.borderLight,
         },
       ]}
     >
@@ -79,9 +79,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: Spacing.lg,
-    borderRadius: Radius.xl,
-    borderWidth: 2,
+    borderRadius: Radius.lg,
+    borderWidth: 1,
     marginBottom: Spacing.sm,
+    shadowColor: '#10221D',
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.04,
+    shadowRadius: 12,
+    elevation: 1,
   },
   content: {
     flexDirection: 'row',
