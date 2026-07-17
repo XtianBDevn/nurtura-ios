@@ -1,11 +1,20 @@
 import React from 'react';
 import { View, TouchableOpacity, StyleSheet } from 'react-native';
-import { NText } from './NText';
+import { PremiumAvatar } from './PremiumAvatar';
 import { useColors } from '@/hooks/useThemeColor';
 import { impact } from '@/lib/haptics';
 import { Spacing, Radius } from '@/lib/theme';
 
-const EMOJIS = ['👴', '👵', '👶', '🧓', '👤', '💜', '🌻', '🐾'];
+const AVATARS = [
+  'person-outline',
+  'person-circle-outline',
+  'happy-outline',
+  'accessibility-outline',
+  'heart-outline',
+  'sunny-outline',
+  'leaf-outline',
+  'people-outline',
+];
 
 interface EmojiPickerProps {
   selected: string;
@@ -17,23 +26,22 @@ export function EmojiPicker({ selected, onSelect }: EmojiPickerProps) {
 
   return (
     <View style={styles.container}>
-      {EMOJIS.map((emoji) => (
+      {AVATARS.map((avatar) => (
         <TouchableOpacity
-          key={emoji}
+          key={avatar}
           onPress={() => {
             impact();
-            onSelect(emoji);
+            onSelect(avatar);
           }}
           style={[
-            styles.emojiBtn,
+            styles.avatarBtn,
             {
-              backgroundColor: selected === emoji ? colors.primaryLight : colors.surfaceMuted,
-              borderColor: selected === emoji ? colors.primary : 'transparent',
-              transform: [{ scale: selected === emoji ? 1.1 : 1 }],
+              backgroundColor: colors.card,
+              borderColor: selected === avatar ? colors.primary : colors.borderLight,
             },
           ]}
         >
-          <NText variant="title2">{emoji}</NText>
+          <PremiumAvatar value={avatar} size={44} selected={selected === avatar} />
         </TouchableOpacity>
       ))}
     </View>
@@ -47,12 +55,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: Spacing.sm,
   },
-  emojiBtn: {
+  avatarBtn: {
     width: 56,
     height: 56,
     borderRadius: Radius.full,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 2,
+    borderWidth: 1,
   },
 });

@@ -277,7 +277,7 @@ export default function MoreScreen() {
                     <View style={{ flex: 1, marginLeft: Spacing.md }}>
                       <NText variant="headline">{med.name}</NText>
                       <NText variant="caption1" muted>
-                        {med.recipientEmoji} {med.recipientName}
+                        {med.recipientName}
                       </NText>
                       <NText variant="caption1" muted>
                         Dose: {med.dosage || 'As directed'} · Frequency: {med.frequency || 'Daily'}
@@ -312,7 +312,7 @@ export default function MoreScreen() {
                     <SelectionCard
                       key={r._id}
                       title={r.name}
-                      icon={r.avatarEmoji || '👤'}
+                      icon={r.avatarEmoji || 'person-outline'}
                       selected={(medRecipientId ?? recipients?.[0]?._id) === r._id}
                       onPress={() => setMedRecipientId(r._id)}
                     />
@@ -350,7 +350,7 @@ export default function MoreScreen() {
                   <SelectionCard
                     key={recipient._id}
                     title={recipient.name}
-                    icon={recipient.avatarEmoji || '👤'}
+                    icon={recipient.avatarEmoji || 'person-outline'}
                     selected={(messageRecipientId ?? recipients?.[0]?._id) === recipient._id}
                     onPress={() => setMessageRecipientId(recipient._id)}
                   />
@@ -386,7 +386,7 @@ export default function MoreScreen() {
                           </NText>
                         </View>
                         <NText variant="caption2" muted style={{ marginBottom: Spacing.xs }}>
-                          {msg.recipientEmoji} {msg.recipientName}
+                          {msg.recipientName}
                         </NText>
                         <NText variant="subheadline" muted>{msg.content}</NText>
                       </View>
@@ -425,7 +425,7 @@ export default function MoreScreen() {
                   <SelectionCard
                     key={r._id}
                     title={r.name}
-                    icon={r.avatarEmoji || '👤'}
+                    icon={r.avatarEmoji || 'person-outline'}
                     selected={(timeRecipientId ?? recipients?.[0]?._id) === r._id}
                     onPress={() => setTimeRecipientId(r._id)}
                   />

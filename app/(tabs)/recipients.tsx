@@ -19,6 +19,7 @@ import { NCard } from '@/components/NCard';
 import { NInput } from '@/components/NInput';
 import { SelectionCard } from '@/components/SelectionCard';
 import { EmojiPicker } from '@/components/EmojiPicker';
+import { PremiumAvatar } from '@/components/PremiumAvatar';
 import { useColors } from '@/hooks/useThemeColor';
 import { NotificationFeedbackType, notification } from '@/lib/haptics';
 import { Spacing } from '@/lib/theme';
@@ -65,13 +66,13 @@ export default function RecipientsScreen() {
   const [loading, setLoading] = useState(false);
   const [name, setName] = useState('');
   const [careType, setCareType] = useState<CareType>('senior');
-  const [emoji, setEmoji] = useState('👴');
+  const [emoji, setEmoji] = useState('person-outline');
   const [conditions, setConditions] = useState('');
 
   const resetForm = () => {
     setName('');
     setCareType('senior');
-    setEmoji('👴');
+    setEmoji('person-outline');
     setConditions('');
   };
 
@@ -388,7 +389,7 @@ export default function RecipientsScreen() {
                 <NCard style={styles.recipientCard} elevated>
                   <View style={[styles.recipientRail, { backgroundColor: colors.primary }]} />
                   <View style={styles.recipientRow}>
-                    <NText style={{ fontSize: 40 }}>{r.avatarEmoji || '👤'}</NText>
+                    <PremiumAvatar value={r.avatarEmoji} size={56} />
                     <View style={styles.recipientInfo}>
                       <NText variant="title3" bold>{r.name}</NText>
                       <NText variant="footnote" muted style={{ textTransform: 'capitalize' }}>
@@ -639,7 +640,7 @@ export default function RecipientsScreen() {
                 <SelectionCard
                   key={option}
                   title={option.charAt(0).toUpperCase() + option.slice(1)}
-                  icon={option === 'appointment' ? '🩺' : option === 'shift' ? '👤' : option === 'medication' ? '💊' : '✅'}
+                  icon={option === 'appointment' ? 'medical-outline' : option === 'shift' ? 'person-outline' : option === 'medication' ? 'medkit-outline' : 'checkmark-circle-outline'}
                   selected={scheduleType === option}
                   onPress={() => setScheduleType(option)}
                 />
@@ -677,7 +678,7 @@ export default function RecipientsScreen() {
             <NText variant="headline" style={styles.label}>Care Type</NText>
             {(['senior', 'disability', 'childcare', 'general'] as CareType[]).map((t) => {
               const icons: Record<CareType, string> = {
-                senior: '👴', disability: '♿', childcare: '👶', general: '💚',
+                senior: 'person-outline', disability: 'accessibility-outline', childcare: 'happy-outline', general: 'heart-outline',
               };
               return (
                 <SelectionCard

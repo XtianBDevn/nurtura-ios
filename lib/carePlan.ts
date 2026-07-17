@@ -57,20 +57,20 @@ export interface CarePlan {
 
 /** Catalog of common chronic conditions offered in intake. */
 export const CONDITION_CATALOG: { key: string; label: string; emoji: string }[] = [
-  { key: 'hypertension', label: 'High Blood Pressure', emoji: '🩸' },
-  { key: 'diabetes', label: 'Diabetes', emoji: '💉' },
-  { key: 'heart_disease', label: 'Heart Disease', emoji: '❤️' },
-  { key: 'copd', label: 'COPD / Respiratory', emoji: '🫁' },
-  { key: 'arthritis', label: 'Arthritis', emoji: '🦴' },
-  { key: 'dementia', label: 'Dementia / Alzheimer’s', emoji: '🧠' },
-  { key: 'stroke', label: 'Stroke History', emoji: '🧠' },
-  { key: 'parkinsons', label: 'Parkinson’s', emoji: '🤝' },
-  { key: 'cancer', label: 'Cancer', emoji: '🎗️' },
-  { key: 'kidney_disease', label: 'Kidney Disease', emoji: '🫘' },
-  { key: 'depression', label: 'Depression / Anxiety', emoji: '💭' },
-  { key: 'osteoporosis', label: 'Osteoporosis', emoji: '🦴' },
-  { key: 'vision_loss', label: 'Vision Loss', emoji: '👁️' },
-  { key: 'hearing_loss', label: 'Hearing Loss', emoji: '👂' },
+  { key: 'hypertension', label: 'High Blood Pressure', emoji: 'water-outline' },
+  { key: 'diabetes', label: 'Diabetes', emoji: 'medical-outline' },
+  { key: 'heart_disease', label: 'Heart Disease', emoji: 'heart-outline' },
+  { key: 'copd', label: 'COPD / Respiratory', emoji: 'fitness-outline' },
+  { key: 'arthritis', label: 'Arthritis', emoji: 'body-outline' },
+  { key: 'dementia', label: 'Dementia / Alzheimer’s', emoji: 'fitness-outline' },
+  { key: 'stroke', label: 'Stroke History', emoji: 'pulse-outline' },
+  { key: 'parkinsons', label: 'Parkinson’s', emoji: 'hand-left-outline' },
+  { key: 'cancer', label: 'Cancer', emoji: 'ribbon-outline' },
+  { key: 'kidney_disease', label: 'Kidney Disease', emoji: 'medical-outline' },
+  { key: 'depression', label: 'Depression / Anxiety', emoji: 'chatbubble-ellipses-outline' },
+  { key: 'osteoporosis', label: 'Osteoporosis', emoji: 'body-outline' },
+  { key: 'vision_loss', label: 'Vision Loss', emoji: 'eye-outline' },
+  { key: 'hearing_loss', label: 'Hearing Loss', emoji: 'ear-outline' },
 ];
 
 export const ADL_CATALOG: { key: string; label: string }[] = [

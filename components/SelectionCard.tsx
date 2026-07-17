@@ -5,11 +5,12 @@ import { NText } from './NText';
 import { useColors } from '@/hooks/useThemeColor';
 import { ImpactFeedbackStyle, impact } from '@/lib/haptics';
 import { Radius, Spacing } from '@/lib/theme';
+import { resolveIconName } from '@/lib/icons';
 
 interface SelectionCardProps {
   title: string;
   subtitle?: string;
-  icon?: string; // emoji
+  icon?: string;
   ionIcon?: keyof typeof Ionicons.glyphMap;
   selected: boolean;
   onPress: () => void;
@@ -45,7 +46,11 @@ export function SelectionCard({
       ]}
     >
       <View style={styles.content}>
-        {icon && <NText variant="title2" style={styles.emoji}>{icon}</NText>}
+        {icon && (
+          <View style={[styles.iconWell, { backgroundColor: selected ? colors.card : colors.surfaceMuted }]}>
+            <Ionicons name={resolveIconName(icon)} size={21} color={colors.primary} />
+          </View>
+        )}
         {ionIcon && (
           <Ionicons
             name={ionIcon}
@@ -93,7 +98,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flex: 1,
   },
-  emoji: {
+  iconWell: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
     marginRight: Spacing.md,
   },
   ionIcon: {

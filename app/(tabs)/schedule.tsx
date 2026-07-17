@@ -325,7 +325,7 @@ export default function ScheduleScreen() {
             <NText variant="headline" style={styles.label}>Type</NText>
             {TYPE_OPTIONS.map((t) => {
               const icons: Record<string, string> = {
-                appointment: '🏥', shift: '👤', medication: '💊', task: '✅',
+                appointment: 'business-outline', shift: 'person-outline', medication: 'medkit-outline', task: 'checkmark-circle-outline',
               };
               return (
                 <SelectionCard
@@ -343,7 +343,7 @@ export default function ScheduleScreen() {
               <SelectionCard
                 key={r._id}
                 title={r.name}
-                icon={r.avatarEmoji || '👤'}
+                icon={r.avatarEmoji || 'person-outline'}
                 selected={recipientId === r._id}
                 onPress={() => setRecipientId(r._id)}
               />
@@ -371,7 +371,7 @@ export default function ScheduleScreen() {
                     <SelectionCard
                       key={option}
                       title={option.charAt(0).toUpperCase() + option.slice(1)}
-                      icon={option === 'daily' ? '🔁' : option === 'weekly' ? '🗓️' : '📅'}
+                      icon={option === 'daily' ? 'repeat-outline' : option === 'weekly' ? 'calendar-outline' : 'calendar-number-outline'}
                       selected={recurrenceType === option}
                       onPress={() => setRecurrenceType(option)}
                     />

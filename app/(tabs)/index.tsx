@@ -5,6 +5,7 @@
 import React from 'react';
 import { View, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { PremiumAvatar } from '@/components/PremiumAvatar';
 import { useQuery } from 'convex/react';
 import { router } from 'expo-router';
 import { NText } from '@/components/NText';
@@ -200,7 +201,7 @@ export default function DashboardScreen() {
         <View style={[styles.sectionCard, styles.planWrap]}>
           <View style={styles.planHeader}>
             <NText variant="caption1" muted>
-              {primaryRecipient.avatarEmoji} {primaryRecipient.name}'s plan
+              {primaryRecipient.name}'s plan
             </NText>
             <NButton
               title="Manage"
@@ -245,7 +246,7 @@ export default function DashboardScreen() {
                 style={styles.recipientRow}
                 activeOpacity={0.6}
               >
-                <NText variant="title3">{r.avatarEmoji || '👤'}</NText>
+                <PremiumAvatar value={r.avatarEmoji} size={42} />
                 <View style={styles.recipientInfo}>
                   <NText variant="headline">{r.name}</NText>
                   <NText variant="caption1" muted style={{ textTransform: 'capitalize' }}>
@@ -289,7 +290,7 @@ export default function DashboardScreen() {
                     <Ionicons name="checkmark" size={12} color={colors.success} />
                   </View>
                 ) : (
-                  <NText variant="body">{s.recipientEmoji}</NText>
+                  <PremiumAvatar value={s.recipientEmoji} size={28} />
                 )}
                 <View style={styles.scheduleInfo}>
                   <NText
@@ -341,7 +342,7 @@ export default function DashboardScreen() {
                 activeOpacity={0.7}
                 onPress={() => router.push('/(tabs)/log')}
               >
-                <NText variant="body">{log.recipientEmoji}</NText>
+                <PremiumAvatar value={log.recipientEmoji} size={28} />
                 <View style={styles.activityInfo}>
                   <NText variant="subheadline">{log.title}</NText>
                   <NText variant="caption1" muted>

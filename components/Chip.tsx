@@ -2,6 +2,8 @@ import React from 'react';
 import { Pressable, View } from 'react-native';
 import { NText } from './NText';
 import { selection } from '@/lib/haptics';
+import { Ionicons } from '@expo/vector-icons';
+import { resolveIconName } from '@/lib/icons';
 
 interface ChipProps {
   label: string;
@@ -22,7 +24,14 @@ export function Chip({ label, emoji, selected, onPress }: ChipProps) {
         selected ? 'bg-primary border-primary' : 'bg-surface-muted border-transparent'
       }`}
     >
-      {emoji ? <NText style={{ marginRight: 6 }}>{emoji}</NText> : null}
+      {emoji ? (
+        <Ionicons
+          name={resolveIconName(emoji)}
+          size={16}
+          color={selected ? '#FFFFFF' : undefined}
+          style={{ marginRight: 6 }}
+        />
+      ) : null}
       <NText
         variant="subheadline"
         bold={selected}

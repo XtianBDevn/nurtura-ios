@@ -26,20 +26,20 @@ import { api } from '../../convex/_generated/api';
 type LogType = 'task' | 'vital' | 'meal' | 'activity' | 'mood' | 'note';
 
 const LOG_TYPES: { type: LogType; icon: string; label: string }[] = [
-  { type: 'task', icon: '✅', label: 'Task' },
-  { type: 'vital', icon: '💓', label: 'Vitals' },
-  { type: 'meal', icon: '🍽️', label: 'Meal' },
-  { type: 'activity', icon: '🏃', label: 'Activity' },
-  { type: 'mood', icon: '😊', label: 'Mood' },
-  { type: 'note', icon: '📝', label: 'Note' },
+  { type: 'task', icon: 'checkmark-circle-outline', label: 'Task' },
+  { type: 'vital', icon: 'pulse-outline', label: 'Vitals' },
+  { type: 'meal', icon: 'restaurant-outline', label: 'Meal' },
+  { type: 'activity', icon: 'walk-outline', label: 'Activity' },
+  { type: 'mood', icon: 'happy-outline', label: 'Mood' },
+  { type: 'note', icon: 'document-text-outline', label: 'Note' },
 ];
 
 const MOODS = [
-  { score: 5, emoji: '😊', label: 'Great' },
-  { score: 4, emoji: '🙂', label: 'Good' },
-  { score: 3, emoji: '😐', label: 'Okay' },
-  { score: 2, emoji: '😟', label: 'Low' },
-  { score: 1, emoji: '😢', label: 'Bad' },
+  { score: 5, emoji: 'happy-outline', label: 'Great' },
+  { score: 4, emoji: 'happy-outline', label: 'Good' },
+  { score: 3, emoji: 'remove-circle-outline', label: 'Okay' },
+  { score: 2, emoji: 'sad-outline', label: 'Low' },
+  { score: 1, emoji: 'sad-outline', label: 'Bad' },
 ];
 
 export default function LogScreen() {
@@ -219,7 +219,7 @@ export default function LogScreen() {
         <SelectionCard
           key={r._id}
           title={r.name}
-          icon={r.avatarEmoji || '👤'}
+          icon={r.avatarEmoji || 'person-outline'}
           subtitle={`${r.careType} care`}
           selected={selectedRecipient === r._id}
           onPress={() => setSelectedRecipient(r._id)}
@@ -268,7 +268,7 @@ export default function LogScreen() {
                 <SelectionCard
                   key={member.userId}
                   title={member.name}
-                  icon={member.profileRole === 'professional' ? '🩺' : '🤝'}
+                  icon={member.profileRole === 'professional' ? 'medical-outline' : 'people-outline'}
                   selected={taskAssignee === member.userId}
                   onPress={() => setTaskAssignee(member.userId)}
                 />
@@ -362,9 +362,9 @@ export default function LogScreen() {
           <NText variant="headline" style={styles.label}>Vital Type</NText>
           <View style={styles.typeGrid}>
             {[
-              { type: 'blood_pressure', icon: '🩸', label: 'Blood Pressure' },
-              { type: 'heart_rate', icon: '💓', label: 'Heart Rate' },
-              { type: 'blood_oxygen', icon: '🫁', label: 'Blood Oxygen' },
+              { type: 'blood_pressure', icon: 'water-outline', label: 'Blood Pressure' },
+              { type: 'heart_rate', icon: 'pulse-outline', label: 'Heart Rate' },
+              { type: 'blood_oxygen', icon: 'fitness-outline', label: 'Blood Oxygen' },
             ].map((item) => (
               <SelectionCard
                 key={item.type}

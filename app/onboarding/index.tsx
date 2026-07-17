@@ -97,7 +97,7 @@ export default function OnboardingScreen() {
   // Recipient
   const [recipientName, setRecipientName] = useState('');
   const [careType, setCareType] = useState<CareType>('senior');
-  const [avatarEmoji, setAvatarEmoji] = useState('👴');
+  const [avatarEmoji, setAvatarEmoji] = useState('person-outline');
   const [dateOfBirth, setDateOfBirth] = useState('');
   // Health
   const [conditions, setConditions] = useState<string[]>([]);
@@ -170,12 +170,12 @@ export default function OnboardingScreen() {
   useEffect(() => {
     if (step !== STEP.IVY) return;
     const msgs = [
-      "Hi there! 👋 I'm Ivy, your Nurtura care assistant.",
+      "Hi there. I'm Ivy, your Nurtura care assistant.",
       "I'll help you stay on top of medications, appointments, and daily care.",
       recipientName.trim()
-        ? `I've tailored a care plan for ${recipientName.trim()} based on what you shared. 🌿`
-        : 'Add a care recipient anytime and I’ll build a personalized care plan. 🌿',
-      "Ready when you are — let's finish setting up!",
+        ? `I've tailored a care plan for ${recipientName.trim()} based on what you shared.`
+        : 'Add a care recipient anytime and I’ll build a personalized care plan.',
+      "Ready when you are. Let's finish setting up.",
     ];
     setChatMessages([]);
     msgs.forEach((msg, i) => {
@@ -362,7 +362,7 @@ export default function OnboardingScreen() {
             <NInput label="DATE OF BIRTH (OPTIONAL)" placeholder="MM/DD/YYYY" value={dateOfBirth} onChangeText={setDateOfBirth} />
             <NText variant="headline" style={{ marginTop: 8, marginBottom: 12 }}>Care Type</NText>
             {(['senior', 'disability', 'childcare', 'general'] as CareType[]).map((t) => {
-              const icons: Record<CareType, string> = { senior: '👴', disability: '♿', childcare: '👶', general: '💚' };
+              const icons: Record<CareType, string> = { senior: 'person-outline', disability: 'accessibility-outline', childcare: 'happy-outline', general: 'heart-outline' };
               return (
                 <SelectionCard key={t} title={t.charAt(0).toUpperCase() + t.slice(1)} icon={icons[t]} selected={careType === t} onPress={() => setCareType(t)} />
               );

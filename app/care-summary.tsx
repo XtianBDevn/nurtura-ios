@@ -7,6 +7,7 @@ import {
   View,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { PremiumAvatar } from '@/components/PremiumAvatar';
 import { Redirect, router } from 'expo-router';
 import { useConvexAuth, useQuery } from 'convex/react';
 import { NButton } from '@/components/NButton';
@@ -183,9 +184,7 @@ export default function CareSummaryScreen() {
         <NCard style={styles.personCard} elevated>
           <View style={[styles.careRail, { backgroundColor: colors.primary }]} />
           <View style={styles.personRow}>
-            <View style={[styles.avatar, { backgroundColor: colors.primaryLight }]}>
-              <NText style={styles.avatarEmoji}>{primaryRecipient.avatarEmoji || '👤'}</NText>
-            </View>
+            <PremiumAvatar value={primaryRecipient.avatarEmoji} size={52} />
             <View style={{ flex: 1 }}>
               <NText variant="title3" bold>{primaryRecipient.name}</NText>
               <NText variant="footnote" muted style={{ textTransform: 'capitalize' }}>
