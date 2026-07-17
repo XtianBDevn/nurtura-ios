@@ -14,7 +14,7 @@ import { Colors } from '@/lib/theme';
 
 SplashScreen.preventAutoHideAsync();
 
-const CONVEX_URL = process.env.EXPO_PUBLIC_CONVEX_URL || 'https://successful-shrimp-557.convex.cloud';
+const CONVEX_URL = process.env.EXPO_PUBLIC_CONVEX_URL || 'https://rugged-opossum-507.convex.cloud';
 const convex = new ConvexReactClient(CONVEX_URL);
 
 const webStorage = {
