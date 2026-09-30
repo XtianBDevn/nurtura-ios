@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { NText } from './NText';
 import { useColors } from '@/hooks/useThemeColor';
 import type { CarePlan, RiskLevel } from '@/lib/carePlan';
+import { MedicalDisclaimer } from './MedicalDisclaimer';
 
 const RISK_META: Record<RiskLevel, { label: string; color: keyof ReturnType<typeof useColors> }> = {
   low: { label: 'Lower need', color: 'success' },
@@ -90,6 +91,8 @@ export function CarePlanCard({ plan, compact = false }: CarePlanCardProps) {
           </View>
         </>
       )}
+
+      <MedicalDisclaimer />
     </View>
   );
 }

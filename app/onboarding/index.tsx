@@ -7,7 +7,7 @@
  *
  * Steps: Role → Caregiver Profile → Accessibility → Recipient Basics →
  * Conditions → Allergies & Meds → Mobility & Falls → Cognition →
- * Independence (ADL/IADL) → Quality of Life → Care Plan → Meet Ivy → Done
+ * Independence (ADL/IADL) → Quality of Life → Care Plan → Done
  */
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Animated, Alert, ActivityIndicator } from 'react-native';
@@ -49,10 +49,9 @@ const STEP = {
   INDEPENDENCE: 8,
   QOL: 9,
   PLAN: 10,
-  IVY: 11,
-  DONE: 12,
+  DONE: 11,
 } as const;
-const TOTAL = 13;
+const TOTAL = 12;
 
 type Role = 'professional' | 'family' | null;
 type AgeGroup = 'under_65' | '65_plus' | null;
@@ -110,8 +109,6 @@ export default function OnboardingScreen() {
   const [adlLevels, setAdlLevels] = useState<Record<string, number>>({});
   const [iadlLevels, setIadlLevels] = useState<Record<string, number>>({});
   const [qol, setQol] = useState<Record<string, number>>({});
-  // Ivy chat
-  const [chatMessages, setChatMessages] = useState<string[]>([]);
 
   const toList = (text: string) =>
     text
@@ -150,41 +147,21 @@ export default function OnboardingScreen() {
   };
 
   const next = () => {
-    // After recipient step, honor skip-health by jumping to Ivy.
+    // Skipping health intake also skips the care-plan preview.
     if (step === STEP.RECIPIENT && (!recipientName.trim() || skipHealth)) {
-      animateTo(STEP.IVY);
+      animateTo(STEP.DONE);
       return;
     }
     animateTo(step + 1);
   };
 
   const back = () => {
-    if (step === STEP.IVY && (!recipientName.trim() || skipHealth)) {
+    if (step === STEP.DONE && (!recipientName.trim() || skipHealth)) {
       animateTo(STEP.RECIPIENT);
       return;
     }
     if (step > 0) animateTo(step - 1);
   };
-
-  // Ivy intro animation
-  useEffect(() => {
-    if (step !== STEP.IVY) return;
-    const msgs = [
-      "Hi there! 👋 I'm Ivy, your Nurtura care assistant.",
-      "I'll help you stay on top of medications, appointments, and daily care.",
-      recipientName.trim()
-        ? `I've tailored a care plan for ${recipientName.trim()} based on what you shared. 🌿`
-        : 'Add a care recipient anytime and I’ll build a personalized care plan. 🌿',
-      "Ready when you are — let's finish setting up!",
-    ];
-    setChatMessages([]);
-    msgs.forEach((msg, i) => {
-      setTimeout(() => {
-        setChatMessages((prev) => [...prev, msg]);
-        impact(ImpactFeedbackStyle.Light);
-      }, (i + 1) * 1000);
-    });
-  }, [step, recipientName]);
 
   useEffect(() => {
     if (authLoading || hasAuthToken || convexAuthenticated || authAlertShown.current) return;
@@ -354,7 +331,7 @@ export default function OnboardingScreen() {
             icon="heart-outline" title="Who Are You Caring For?"
             subtitle="We'll use this to personalize their care"
             onBack={back} onNext={next}
-            onSkip={() => { setSkipHealth(true); setRecipientName(''); animateTo(STEP.IVY); }}
+            onSkip={() => { setSkipHealth(true); setRecipientName(''); animateTo(STEP.DONE); }}
           >
             <NText variant="headline" style={{ marginBottom: 12 }}>Choose an Avatar</NText>
             <EmojiPicker selected={avatarEmoji} onSelect={setAvatarEmoji} />
@@ -535,37 +512,6 @@ export default function OnboardingScreen() {
         );
       }
 
-      case STEP.IVY:
-        return (
-          <StepShell
-            stepIndex={step} totalSteps={TOTAL} fade={fade}
-            icon="chatbubble-ellipses-outline" title="Meet Ivy"
-            subtitle="Your AI care assistant"
-            onBack={back} onNext={next}
-          >
-            <View style={{ gap: 12 }}>
-              {chatMessages.map((msg, i) => (
-                <View key={i} className="rounded-2xl p-4" style={{ backgroundColor: colors.primaryLight, maxWidth: '88%' }}>
-                  <View className="flex-row items-center mb-1" style={{ gap: 4 }}>
-                    <View className="w-5 h-5 rounded-full items-center justify-center" style={{ backgroundColor: colors.primary }}>
-                      <Ionicons name="leaf" size={11} color="#FFF" />
-                    </View>
-                    <NText variant="caption2" bold color={colors.primary}>Ivy</NText>
-                  </View>
-                  <NText variant="subheadline">{msg}</NText>
-                </View>
-              ))}
-              {chatMessages.length < 4 && (
-                <View className="flex-row rounded-2xl px-4 py-3 self-start" style={{ backgroundColor: colors.surfaceMuted, gap: 4 }}>
-                  {[1, 0.6, 0.3].map((o, i) => (
-                    <View key={i} className="w-2 h-2 rounded-full" style={{ backgroundColor: colors.textTertiary, opacity: o }} />
-                  ))}
-                </View>
-              )}
-            </View>
-          </StepShell>
-        );
-
       case STEP.DONE:
         return (
           <StepShell
@@ -581,7 +527,6 @@ export default function OnboardingScreen() {
                 { icon: 'calendar-outline', label: 'Manage schedules & appointments' },
                 { icon: 'people-outline', label: 'Coordinate with your care team' },
                 { icon: 'sparkles-outline', label: 'Follow a personalized care plan' },
-                { icon: 'chatbubble-outline', label: 'Ask Ivy anything' },
               ].map((item) => (
                 <View key={item.label} className="flex-row items-center">
                   <Ionicons name={item.icon as any} size={20} color={colors.primary} />

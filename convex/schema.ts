@@ -161,7 +161,8 @@ const schema = defineSchema({
     timestamp: v.number(),
   })
     .index("by_care_recipient", ["careRecipientId"])
-    .index("by_care_recipient_time", ["careRecipientId", "timestamp"]),
+    .index("by_care_recipient_time", ["careRecipientId", "timestamp"])
+    .index("by_user", ["userId"]),
 
   // Medications
   medications: defineTable({
@@ -274,7 +275,9 @@ const schema = defineSchema({
     userName: v.string(),
     content: v.string(),
     timestamp: v.number(),
-  }).index("by_care_recipient", ["careRecipientId"]),
+  })
+    .index("by_care_recipient", ["careRecipientId"])
+    .index("by_user", ["userId"]),
 
   // Chatbot conversations
   chatMessages: defineTable({

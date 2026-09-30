@@ -11,10 +11,11 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { Colors } from '@/lib/theme';
+import { requireConvexUrl } from '@/lib/convexUrl';
 
 SplashScreen.preventAutoHideAsync();
 
-const CONVEX_URL = process.env.EXPO_PUBLIC_CONVEX_URL || 'https://successful-shrimp-557.convex.cloud';
+const CONVEX_URL = requireConvexUrl();
 const convex = new ConvexReactClient(CONVEX_URL);
 
 const webStorage = {

@@ -13,6 +13,7 @@ import { useAuthActions, useAuthToken } from '@convex-dev/auth/react';
 import { NText } from '@/components/NText';
 import { NButton } from '@/components/NButton';
 import { NInput } from '@/components/NInput';
+import { MedicalDisclaimer } from '@/components/MedicalDisclaimer';
 import { useColors } from '@/hooks/useThemeColor';
 import { Spacing, Radius } from '@/lib/theme';
 
@@ -145,6 +146,7 @@ export default function SignUpScreen() {
             icon="lock-closed-outline"
             secureTextEntry
           />
+          <MedicalDisclaimer showLinks />
           <NButton
             title="Create Account"
             onPress={handleSignUp}
