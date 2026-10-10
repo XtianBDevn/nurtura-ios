@@ -18,6 +18,7 @@ import { useAuthToken } from '@convex-dev/auth/react';
 import { NText } from '@/components/NText';
 import { NButton } from '@/components/NButton';
 import { NCard } from '@/components/NCard';
+import { MedicalDisclaimer } from '@/components/MedicalDisclaimer';
 import { useColors } from '@/hooks/useThemeColor';
 import { Spacing, Radius } from '@/lib/theme';
 import { api } from '../convex/_generated/api';
@@ -100,7 +101,7 @@ function Marketing({ colors }: { colors: ReturnType<typeof useColors> }) {
 
         <View style={styles.heroCTAs}>
           <NButton
-            title="Start Free →"
+            title="Create Account"
             onPress={() => router.push('/(auth)/signup')}
             size="lg"
             fullWidth
@@ -117,7 +118,7 @@ function Marketing({ colors }: { colors: ReturnType<typeof useColors> }) {
 
         {/* Trust badges */}
         <View style={styles.badges}>
-          {['iPhone & iPad', 'Secure sign-in', 'Care-team ready'].map((badge) => (
+          {['iPhone', 'Secure sign-in', 'Care-team ready'].map((badge) => (
             <View key={badge} style={[styles.badge, { backgroundColor: colors.surfaceMuted }]}>
               <Ionicons name="checkmark-circle" size={14} color={colors.primary} />
               <NText variant="caption2" style={{ marginLeft: 4 }}>{badge}</NText>
@@ -148,54 +149,6 @@ function Marketing({ colors }: { colors: ReturnType<typeof useColors> }) {
         </View>
       </View>
 
-      {/* Pricing */}
-      <View style={styles.section}>
-        <NText variant="caption1" color={colors.primary} center bold>
-          PRICING
-        </NText>
-        <NText variant="title2" center bold style={styles.sectionTitle}>
-          Plans for every caregiver
-        </NText>
-
-        {[
-          { name: 'Free', price: '$0', features: ['1 care recipient', 'Basic logging', '7-day history'] },
-          { name: 'Plus', price: '$9.99', features: ['3 recipients', 'Ivy AI chatbot', 'Calendar sync', 'No ads'], popular: true },
-          { name: 'Professional', price: '$24.99', features: ['Unlimited recipients', '24/7 Ivy', 'FHIR/MyChart', 'Priority support'] },
-        ].map((plan) => (
-          <NCard
-            key={plan.name}
-            style={[
-              styles.pricingCard,
-              plan.popular && { borderColor: colors.primary, borderWidth: 2 },
-            ]}
-          >
-            {plan.popular && (
-              <View style={[styles.popularBadge, { backgroundColor: colors.primary }]}>
-                <NText variant="caption2" color="#FFF" bold>MOST POPULAR</NText>
-              </View>
-            )}
-            <NText variant="title3" bold>{plan.name}</NText>
-            <View style={styles.priceRow}>
-              <NText variant="largeTitle" bold>{plan.price}</NText>
-              {plan.price !== '$0' && <NText variant="footnote" muted>/month</NText>}
-            </View>
-            {plan.features.map((f) => (
-              <View key={f} style={styles.featureRow}>
-                <Ionicons name="checkmark-circle" size={16} color={colors.primary} />
-                <NText variant="subheadline" style={{ marginLeft: Spacing.sm }}>{f}</NText>
-              </View>
-            ))}
-            <NButton
-              title={plan.popular ? 'Start Free Trial' : 'Get Started'}
-              variant={plan.popular ? 'primary' : 'outline'}
-              onPress={() => router.push('/(auth)/signup')}
-              fullWidth
-              style={{ marginTop: Spacing.lg }}
-            />
-          </NCard>
-        ))}
-      </View>
-
       {/* Bottom CTA */}
       <View style={[styles.bottomCTA, { backgroundColor: colors.primaryLight }]}>
         <Ionicons name="leaf" size={32} color={colors.primary} />
@@ -212,7 +165,8 @@ function Marketing({ colors }: { colors: ReturnType<typeof useColors> }) {
       </View>
 
       <View style={styles.footer}>
-        <NText variant="caption1" muted center>
+        <MedicalDisclaimer center showLinks />
+        <NText variant="caption1" muted center style={{ marginTop: Spacing.lg }}>
           © 2026 Bon Air Media. All rights reserved.
         </NText>
       </View>
@@ -306,28 +260,6 @@ const styles = StyleSheet.create({
   },
   featureTitle: {
     marginBottom: Spacing.xs,
-  },
-  pricingCard: {
-    marginBottom: Spacing.md,
-    overflow: 'hidden',
-  },
-  popularBadge: {
-    alignSelf: 'flex-start',
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.xs,
-    borderRadius: Radius.full,
-    marginBottom: Spacing.md,
-  },
-  priceRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    gap: Spacing.xs,
-    marginVertical: Spacing.sm,
-  },
-  featureRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: Spacing.sm,
   },
   bottomCTA: {
     margin: Spacing.xl,

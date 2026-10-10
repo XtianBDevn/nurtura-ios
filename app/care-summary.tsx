@@ -12,6 +12,7 @@ import { useConvexAuth, useQuery } from 'convex/react';
 import { NButton } from '@/components/NButton';
 import { NCard } from '@/components/NCard';
 import { NText } from '@/components/NText';
+import { MedicalDisclaimer } from '@/components/MedicalDisclaimer';
 import { useColors } from '@/hooks/useThemeColor';
 import { generateCarePlan } from '@/lib/carePlan';
 import { Radius, Spacing } from '@/lib/theme';
@@ -201,6 +202,7 @@ export default function CareSummaryScreen() {
               <NText variant="subheadline" color={colors.primaryDark}>
                 {carePlan.summary}
               </NText>
+              <MedicalDisclaimer />
             </View>
           ) : null}
         </NCard>

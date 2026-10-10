@@ -2,6 +2,7 @@ import React from 'react';
 import { render } from '@testing-library/react-native';
 import { CarePlanCard } from '@/components/CarePlanCard';
 import type { CarePlan } from '@/lib/carePlan';
+import { MEDICAL_DISCLAIMER } from '@/lib/legal';
 
 const plan: CarePlan = {
   riskLevel: 'moderate',
@@ -26,5 +27,6 @@ describe('CarePlanCard', () => {
     expect(
       screen.getByText('Clear walking paths and add grab bars in the bathroom.'),
     ).toBeTruthy();
+    expect(screen.getByText(MEDICAL_DISCLAIMER)).toBeTruthy();
   });
 });

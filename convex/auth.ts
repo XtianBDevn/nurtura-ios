@@ -32,9 +32,10 @@ if (jwtPrivateKey) {
 }
 
 /**
- * Mobile-friendly auth setup.
- * Uses the built-in Password provider from @convex-dev/auth.
- * Email verification is skipped in dev — just sign up and go.
+ * Password sign-up does not send a verification email.
+ * No email provider is configured, and there is no dev-only bypass:
+ * account creation behaves the same in every environment.
+ * Add a Password `verify` email provider before requiring verification.
  */
 export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
   providers: [Password],

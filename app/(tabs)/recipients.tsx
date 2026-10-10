@@ -45,7 +45,7 @@ export default function RecipientsScreen() {
   const [showAdd, setShowAdd] = useState(false);
   const [showDetail, setShowDetail] = useState(false);
   const [selectedRecipientId, setSelectedRecipientId] = useState<string | null>(null);
-  const [scheduleDate, setScheduleDate] = useState(new Date());
+  const [scheduleDate] = useState(() => new Date());
   const [medName, setMedName] = useState('');
   const [medDosage, setMedDosage] = useState('');
   const [medFrequency, setMedFrequency] = useState('');

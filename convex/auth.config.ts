@@ -1,10 +1,11 @@
+/**
+ * Convex injects CONVEX_SITE_URL on the deployment. Do not fall back to a
+ * hardcoded site URL, or tokens will be checked against the wrong deployment.
+ */
 export default {
   providers: [
     {
-      domain:
-        process.env.CONVEX_SITE_URL ??
-        process.env.EXPO_PUBLIC_CONVEX_SITE_URL ??
-        "https://successful-shrimp-557.convex.site",
+      domain: process.env.CONVEX_SITE_URL,
       applicationID: "convex",
     },
   ],

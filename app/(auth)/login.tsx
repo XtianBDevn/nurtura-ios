@@ -122,14 +122,6 @@ export default function LoginScreen() {
           />
 
           <NButton
-            title="Forgot password?"
-            variant="ghost"
-            size="sm"
-            onPress={() => Alert.alert('Reset Password', 'Password reset email will be sent.')}
-            style={styles.forgot}
-          />
-
-          <NButton
             title="Sign In"
             onPress={handleLogin}
             loading={loading}
@@ -178,7 +170,6 @@ const styles = StyleSheet.create({
   logoText: { marginLeft: Spacing.xs },
   subtitle: { marginTop: Spacing.xs, marginBottom: Spacing['2xl'] },
   form: { gap: Spacing.xs },
-  forgot: { alignSelf: 'flex-end', marginBottom: Spacing.sm },
   switchRow: {
     flexDirection: 'row',
     alignItems: 'center',

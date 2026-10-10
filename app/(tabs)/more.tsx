@@ -19,13 +19,14 @@ import { NText } from '@/components/NText';
 import { NButton } from '@/components/NButton';
 import { NCard } from '@/components/NCard';
 import { NInput } from '@/components/NInput';
+import { MedicalDisclaimer } from '@/components/MedicalDisclaimer';
 import { SelectionCard } from '@/components/SelectionCard';
 import { useColors } from '@/hooks/useThemeColor';
 import { ImpactFeedbackStyle, NotificationFeedbackType, impact, notification } from '@/lib/haptics';
 import { Spacing, Radius } from '@/lib/theme';
 import { api } from '../../convex/_generated/api';
 
-type ModalType = 'medications' | 'messages' | 'timeTracking' | 'subscription' | 'security' | null;
+type ModalType = 'medications' | 'messages' | 'timeTracking' | 'security' | null;
 
 interface MenuItem {
   icon: keyof typeof Ionicons.glyphMap;
@@ -65,6 +66,7 @@ export default function MoreScreen() {
   const sendMessage = useMutation(api.messages.send);
   const clockIn = useMutation(api.timeEntries.clockIn);
   const clockOut = useMutation(api.timeEntries.clockOut);
+  const deleteAccount = useMutation(api.accountDeletion.deleteAccount);
 
   // Live shift timer — ticks while a shift is active
   useEffect(() => {
@@ -128,20 +130,60 @@ export default function MoreScreen() {
       modal: 'timeTracking',
     },
     {
-      icon: 'sparkles',
-      label: 'Subscription',
-      subtitle: subscription?.plan || 'Free Plan',
-      color: colors.primary,
-      modal: 'subscription',
-    },
-    {
       icon: 'shield-checkmark',
       label: 'Security & Privacy',
-      subtitle: 'Data protection',
+      subtitle: 'Account and data',
       color: colors.success,
       modal: 'security',
     },
   ];
+
+  const handleDeleteAccount = () => {
+    Alert.alert(
+      'Delete account?',
+      'This permanently deletes your Nurtura login and profile. Care recipients that only you can access are deleted, including their health details, logs, medications, and schedule. If other caregivers share a recipient, that record stays with them and your membership is removed. This cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Continue',
+          style: 'destructive',
+          onPress: () => {
+            Alert.alert(
+              'Delete your account now?',
+              'You will be signed out and will not be able to recover this account.',
+              [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                  text: 'Delete Account',
+                  style: 'destructive',
+                  onPress: async () => {
+                    setLoading(true);
+                    try {
+                      await deleteAccount({});
+                      try {
+                        await signOut();
+                      } catch {
+                        // The account deletion already removed the session.
+                      }
+                      setActiveModal(null);
+                      router.replace('/');
+                    } catch (err: any) {
+                      Alert.alert(
+                        'Could not delete account',
+                        err?.message || 'Please try again.',
+                      );
+                    } finally {
+                      setLoading(false);
+                    }
+                  },
+                },
+              ],
+            );
+          },
+        },
+      ],
+    );
+  };
 
   const handleSignOut = () => {
     Alert.alert('Sign Out', 'Are you sure?', [
@@ -457,70 +499,6 @@ export default function MoreScreen() {
           </View>
         );
 
-      case 'subscription':
-        return (
-          <View style={styles.modalBody}>
-            <NText variant="title3" bold>Subscription</NText>
-            <NText variant="subheadline" muted style={{ marginBottom: Spacing.xl }}>
-              Manage your Nurtura plan
-            </NText>
-
-            {[
-              {
-                name: 'Free', price: '$0',
-                features: ['1 care recipient', 'Basic logging', '7-day history'],
-                current: !subscription || subscription.plan === 'free',
-              },
-              {
-                name: 'Plus', price: '$9.99/mo',
-                features: ['3 recipients', 'Ivy AI chatbot', 'Calendar sync', 'No ads'],
-                current: subscription?.plan === 'plus',
-                popular: true,
-              },
-              {
-                name: 'Professional', price: '$24.99/mo',
-                features: ['Unlimited recipients', '24/7 Ivy', 'FHIR/MyChart', 'Priority support'],
-                current: subscription?.plan === 'professional',
-              },
-            ].map((plan) => (
-              <NCard
-                key={plan.name}
-                style={[
-                  { marginBottom: Spacing.md },
-                  plan.current && { borderColor: colors.primary, borderWidth: 2 },
-                ]}
-              >
-                <View style={styles.planRow}>
-                  <View>
-                    <NText variant="title3" bold>{plan.name}</NText>
-                    <NText variant="headline" color={colors.primary}>{plan.price}</NText>
-                  </View>
-                  {plan.current && (
-                    <View style={[styles.currentBadge, { backgroundColor: colors.primaryLight }]}>
-                      <NText variant="caption2" color={colors.primary} bold>CURRENT</NText>
-                    </View>
-                  )}
-                </View>
-                {plan.features.map((f) => (
-                  <View key={f} style={styles.featureRow}>
-                    <Ionicons name="checkmark-circle" size={16} color={colors.primary} />
-                    <NText variant="subheadline" style={{ marginLeft: Spacing.sm }}>{f}</NText>
-                  </View>
-                ))}
-                {!plan.current && (
-                  <NButton
-                    title="Upgrade"
-                    variant={plan.popular ? 'primary' : 'outline'}
-                    onPress={() => Alert.alert('Coming Soon', 'In-app purchases coming soon!')}
-                    fullWidth
-                    style={{ marginTop: Spacing.lg }}
-                  />
-                )}
-              </NCard>
-            ))}
-          </View>
-        );
-
       case 'security':
         return (
           <View style={styles.modalBody}>
@@ -530,29 +508,32 @@ export default function MoreScreen() {
             </NText>
 
             {[
-              { icon: 'lock-closed', title: 'Encryption in Transit', desc: 'All data is encrypted over TLS to the backend', status: 'on' },
-              { icon: 'key', title: 'Secure Token Storage', desc: 'Auth tokens stored in the iOS Keychain', status: 'on' },
-              { icon: 'shield-checkmark', title: 'Team-Based Access', desc: 'Care data is scoped to authorized team members', status: 'on' },
-              { icon: 'finger-print', title: 'Biometric App Lock', desc: 'Require Face ID / Touch ID to open', status: 'soon' },
-              { icon: 'document-text', title: 'Export My Data', desc: 'Download a copy of your data', status: 'soon' },
+              { icon: 'lock-closed' as const, title: 'Encryption in Transit', desc: 'Care data is sent over TLS' },
+              { icon: 'key' as const, title: 'Secure Token Storage', desc: 'Auth tokens are stored in the iOS Keychain' },
+              { icon: 'shield-checkmark' as const, title: 'Team-Based Access', desc: 'Care data is limited to authorized team members' },
             ].map((item) => (
               <NCard key={item.title} style={{ marginBottom: Spacing.md }}>
                 <View style={styles.securityRow}>
-                  <Ionicons name={item.icon as any} size={22} color={colors.primary} />
+                  <Ionicons name={item.icon} size={22} color={colors.primary} />
                   <View style={{ flex: 1, marginLeft: Spacing.md }}>
                     <NText variant="headline">{item.title}</NText>
                     <NText variant="caption1" muted>{item.desc}</NText>
                   </View>
-                  {item.status === 'on' ? (
-                    <Ionicons name="checkmark-circle" size={22} color={colors.success} />
-                  ) : (
-                    <View style={[styles.currentBadge, { backgroundColor: colors.surfaceMuted }]}>
-                      <NText variant="caption2" muted bold>SOON</NText>
-                    </View>
-                  )}
+                  <Ionicons name="checkmark-circle" size={22} color={colors.success} />
                 </View>
               </NCard>
             ))}
+
+            <MedicalDisclaimer showLinks />
+
+            <NButton
+              title="Delete Account"
+              variant="danger"
+              onPress={handleDeleteAccount}
+              loading={loading}
+              fullWidth
+              style={{ marginTop: Spacing.xl }}
+            />
           </View>
         );
 
@@ -618,22 +599,6 @@ export default function MoreScreen() {
             </NCard>
           </TouchableOpacity>
         ))}
-
-        {/* Integrations */}
-        <TouchableOpacity activeOpacity={0.6} onPress={() => Alert.alert('Coming Soon', 'Integration settings coming soon!')}>
-          <NCard style={styles.menuItem} elevated>
-            <View style={styles.menuRow}>
-              <View style={[styles.menuIcon, { backgroundColor: `${colors.info}15` }]}>
-                <Ionicons name="link" size={20} color={colors.info} />
-              </View>
-              <View style={{ flex: 1 }}>
-                <NText variant="headline">Integrations</NText>
-                <NText variant="caption1" muted>Calendar, MyChart, FHIR</NText>
-              </View>
-              <Ionicons name="chevron-forward" size={16} color={colors.textTertiary} />
-            </View>
-          </NCard>
-        </TouchableOpacity>
 
         {/* Sign Out */}
         <NButton
@@ -752,10 +717,6 @@ const styles = StyleSheet.create({
   // Time tracking
   timerSection: { paddingVertical: Spacing.xl },
   timerBtns: { marginTop: Spacing.xl },
-  // Subscription
-  planRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: Spacing.md },
-  currentBadge: { paddingHorizontal: Spacing.md, paddingVertical: 4, borderRadius: Radius.full },
-  featureRow: { flexDirection: 'row', alignItems: 'center', marginTop: Spacing.sm },
   // Security
   securityRow: { flexDirection: 'row', alignItems: 'center' },
 });
